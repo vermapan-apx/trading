@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dwarka Inventory Prototype</title>
+  <style>
+    :root {
+      --bg: #f9fafb;
+      --surface: #ffffff;
+      --surface-soft: #f3f4f6;
+      --text: #171717;
+      --text-soft: #404040;
+      --muted: #737373;
+      --border: #e5e7eb;
+      --primary: #dc2626;
+      --primary-hover: #b91c1c;
+      --primary-strong: #991b1b;
+      --primary-soft: #fef2f2;
+      --primary-border: #fecaca;
+      --primary-contrast: #ffffff;
+      --blue: #2563eb;
+      --green: #059669;
+      --amber: #d97706;
+      --violet: #7c3aed;
+      --red: #dc2626;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .04);
+    }
+
+    * { box-sizing: border-box; }
+    html { font-size: 14px; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(220, 38, 38, .18); outline-offset: 1px; }
+    .app { min-height: 100vh; display: flex; }
+
+    .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 30; width: 260px; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); transition: width .22s ease, transform .22s ease; }
+    .sidebar.collapsed { width: 72px; }
+    .brand { height: 72px; padding: 0 18px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+    .brand-mark { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border-radius: 10px; color: white; background: linear-gradient(145deg, #dc2626, #b91c1c); }
+    .brand-mark svg { width: 19px; height: 19px; }
+    .brand-copy { min-width: 0; overflow: hidden; white-space: nowrap; }
+    .brand-copy strong { display: block; font-size: 15px; }
+    .brand-copy span { color: var(--muted); font-size: 11px; }
+    .sidebar.collapsed .brand-copy, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-section, .sidebar.collapsed .profile-copy, .sidebar.collapsed .env { display: none; }
+    .sidebar.collapsed .brand { padding-inline: 18px; }
+
+    .nav { flex: 1; overflow-y: auto; padding: 14px 10px; }
+    .nav-section { margin: 12px 10px 7px; font-size: 10px; font-weight: 700; color: #a1a1aa; letter-spacing: .11em; text-transform: uppercase; }
+    .nav-item { width: 100%; min-height: 40px; margin-bottom: 3px; padding: 9px 11px; display: flex; align-items: center; gap: 12px; border: 0; border-radius: 9px; color: #52525b; background: transparent; text-align: left; transition: .15s ease; }
+    .nav-item:hover { color: var(--text); background: var(--surface-soft); }
+    .nav-item.active { color: #fff; background: var(--primary); box-shadow: none; }
+    .nav-item svg { width: 18px; height: 18px; flex: 0 0 auto; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding-inline: 0; }
+    .nav-label { overflow: hidden; white-space: nowrap; }
+    .nav-badge { margin-left: auto; min-width: 20px; padding: 2px 6px; border-radius: 999px; color: #9a3412; background: #ffedd5; font-size: 10px; font-weight: 700; text-align: center; }
+    .sidebar.collapsed .nav-badge { display: none; }
+
+    .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+    .profile { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; }
+    .avatar { width: 34px; height: 34px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; color: #3730a3; background: #e0e7ff; font-size: 11px; font-weight: 800; }
+    .profile-copy { min-width: 0; line-height: 1.3; }
+    .profile-copy strong { display: block; font-size: 12px; }
+    .profile-copy span { display: block; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .env { margin: 8px 8px 2px; color: #a1a1aa; font-size: 10px; }
+
+    .shell { width: calc(100% - 260px); min-width: 0; margin-left: 260px; transition: width .22s ease, margin-left .22s ease; }
+    .sidebar.collapsed + .shell { width: calc(100% - 72px); margin-left: 72px; }
+    .topbar { position: sticky; top: 0; z-index: 20; height: 72px; padding: 0 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: rgba(255,255,255,.92); border-bottom: 1px solid var(--border); backdrop-filter: blur(14px); }
+    .top-left, .top-right, .inline { display: flex; align-items: center; gap: 10px; }
+    .icon-button { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid transparent; border-radius: 9px; color: #52525b; background: transparent; }
+    .icon-button:hover { background: #f4f4f5; }
+    .icon-button svg { width: 18px; height: 18px; }
+    .global-search { position: relative; width: min(320px, 35vw); }
+    .global-search svg { position: absolute; left: 12px; top: 11px; width: 17px; height: 17px; color: #a1a1aa; }
+    .global-search input { width: 100%; height: 40px; padding: 0 42px 0 38px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: #fafafa; }
+    .shortcut { position: absolute; right: 9px; top: 9px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 5px; color: #a1a1aa; background: white; font-size: 10px; }
+    .context-select { height: 38px; max-width: 170px; padding: 0 30px 0 10px; border: 1px solid var(--border); border-radius: 9px; color: #3f3f46; background: #fff; }
+    .role-chip { padding: 5px 9px; border-radius: 999px; color: #52525b; background: #f4f4f5; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .notification { position: relative; }
+    .notification::after { content: ""; position: absolute; right: 8px; top: 7px; width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; background: #ef4444; }
+
+    main { padding: 26px; }
+    .view { display: none; animation: appear .2s ease; }
+    .view.active { display: block; }
+    @keyframes appear { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+    .page-header { margin-bottom: 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .eyebrow { margin-bottom: 5px; color: #71717a; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 25px; line-height: 1.25; letter-spacing: -.025em; }
+    h2 { margin: 0; font-size: 15px; }
+    .subtitle { margin: 6px 0 0; color: var(--muted); }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .button { min-height: 39px; padding: 9px 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border); border-radius: 9px; color: #3f3f46; background: white; font-weight: 650; }
+    .button:hover { background: var(--surface-soft); border-color: #d4d4d4; }
+    .button.primary { color: white; background: var(--primary); border-color: var(--primary); }
+    .button.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+    .button.danger { color: var(--primary-hover); }
+    .button svg { width: 16px; height: 16px; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+    .stat-card { min-width: 0; padding: 19px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: var(--radius); box-shadow: var(--shadow); transition: transform .18s ease, box-shadow .18s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(15,23,42,.08); }
+    .stat-card.blue { color: #1e3a8a; background: linear-gradient(135deg, #eff6ff, #e0e7ff); }
+    .stat-card.green { color: #065f46; background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+    .stat-card.violet { color: #5b21b6; background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+    .stat-card.amber { color: #92400e; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .stat-label { font-size: 12px; font-weight: 650; opacity: .8; }
+    .stat-value { margin-top: 4px; font-size: 25px; font-weight: 750; letter-spacing: -.03em; }
+    .trend { margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 10px; opacity: .85; }
+    .trend b { padding: 3px 6px; border-radius: 999px; background: rgba(255,255,255,.65); }
+    .stat-icon { width: 48px; height: 48px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 12px; color: white; box-shadow: 0 8px 18px rgba(15,23,42,.13); }
+    .stat-icon svg { width: 24px; height: 24px; }
+    .blue .stat-icon { background: linear-gradient(145deg, #3b82f6, #4f46e5); }
+    .green .stat-icon { background: linear-gradient(145deg, #10b981, #059669); }
+    .violet .stat-icon { background: linear-gradient(145deg, #8b5cf6, #7c3aed); }
+    .amber .stat-icon { background: linear-gradient(145deg, #f59e0b, #d97706); }
+
+    .dashboard-grid { margin-top: 16px; display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card-header { min-height: 58px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(228,228,231,.75); }
+    .card-title { display: flex; align-items: center; gap: 9px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--primary); }
+    .card-note { color: var(--muted); font-size: 11px; }
+    .chart-wrap { padding: 18px; }
+    .chart { height: 246px; position: relative; padding: 10px 8px 29px 38px; }
+    .chart-grid { position: absolute; inset: 12px 8px 29px 38px; display: flex; flex-direction: column; justify-content: space-between; }
+    .chart-grid span { display: block; border-top: 1px dashed #e4e4e7; }
+    .chart-y { position: absolute; inset: 5px auto 25px 0; display: flex; flex-direction: column; justify-content: space-between; color: #a1a1aa; font-size: 10px; }
+    .bars { height: 100%; position: relative; z-index: 2; display: flex; align-items: flex-end; justify-content: space-around; gap: 15px; }
+    .bar-group { height: 100%; flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 5px; position: relative; }
+    .bar { width: min(16px, 35%); border-radius: 5px 5px 2px 2px; transition: filter .15s ease; }
+    .bar:hover { filter: brightness(.92); }
+    .bar.production { background: linear-gradient(to top, #b91c1c, #dc2626); }
+    .bar.purchase { background: linear-gradient(to top, #262626, #525252); }
+    .bar-label { position: absolute; bottom: -21px; color: #71717a; font-size: 10px; }
+    .chart-legend { margin-top: 15px; display: flex; justify-content: center; gap: 18px; color: #71717a; font-size: 11px; }
+    .chart-legend i { width: 8px; height: 8px; display: inline-block; margin-right: 5px; border-radius: 2px; }
+    .activity-list { padding: 6px 18px 13px; }
+    .activity { padding: 13px 0; display: grid; grid-template-columns: 34px 1fr auto; gap: 11px; align-items: start; border-bottom: 1px solid #f1f5f9; }
+    .activity:last-child { border-bottom: 0; }
+    .activity-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
+    .activity-icon svg { width: 16px; height: 16px; }
+    .activity-icon.blue { color: #2563eb; background: #dbeafe; }
+    .activity-icon.green { color: #059669; background: #d1fae5; }
+    .activity-icon.amber { color: #d97706; background: #fef3c7; }
+    .activity-icon.violet { color: #7c3aed; background: #ede9fe; }
+    .activity p { margin: 0; font-size: 12px; font-weight: 600; line-height: 1.4; }
+    .activity small { display: block; margin-top: 4px; color: var(--muted); }
+    .tag { padding: 4px 7px; border-radius: 999px; font-size: 9px; font-weight: 750; text-transform: uppercase; }
+    .tag.ok { color: #047857; background: #d1fae5; }
+    .tag.pending { color: #a16207; background: #fef3c7; }
+    .tag.active { color: #1d4ed8; background: #dbeafe; }
+    .tag.inactive { color: #52525b; background: #e4e4e7; }
+    .tag.both { color: #6d28d9; background: #ede9fe; }
+    .tag.made { color: #0369a1; background: #e0f2fe; }
+    .tag.bought { color: #047857; background: #d1fae5; }
+    .tag.partial { color: #a16207; background: #fffbeb; }
+    .tag.dispatched { color: #1d4ed8; background: #eff6ff; }
+    .tag.overdue { color: #b91c1c; background: #fef2f2; }
+    .tag.closed { color: #525252; background: #f5f5f5; }
+
+    .metric-strip { margin-bottom: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .metric-card { padding: 16px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
+    .metric-icon { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 9px; }
+    .metric-icon svg { width: 18px; height: 18px; }
+    .metric-icon.red { color: var(--primary); background: var(--primary-soft); }
+    .metric-icon.blue { color: #1d4ed8; background: #eff6ff; }
+    .metric-icon.amber { color: #a16207; background: #fffbeb; }
+    .metric-icon.green { color: #047857; background: #ecfdf5; }
+    .metric-copy span { display: block; color: var(--muted); font-size: 10px; }
+    .metric-copy strong { display: block; margin-top: 3px; color: var(--text); font-size: 18px; }
+    .metric-copy small { color: var(--muted); font-size: 9px; }
+    .job-code { color: var(--primary-hover); font-weight: 750; }
+    .outstanding { color: #a16207; font-weight: 750; }
+    .overdue-text { color: #b91c1c; font-weight: 700; }
+    .progress-track { width: 96px; height: 6px; overflow: hidden; border-radius: 999px; background: #e5e7eb; }
+    .progress-fill { height: 100%; border-radius: inherit; background: #059669; }
+    .progress-copy { margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .summary-grid { margin-top: 16px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+    .balance-list { padding: 6px 18px 14px; }
+    .balance-row { padding: 12px 0; display: grid; grid-template-columns: 1fr auto; gap: 10px; border-bottom: 1px solid #f3f4f6; }
+    .balance-row:last-child { border-bottom: 0; }
+    .balance-row strong { display: block; font-size: 12px; }
+    .balance-row span { color: var(--muted); font-size: 10px; }
+    .balance-row b { color: var(--text); font-size: 12px; }
+    .age-bars { padding: 20px 18px; display: grid; gap: 13px; }
+    .age-row { display: grid; grid-template-columns: 70px 1fr 58px; align-items: center; gap: 10px; font-size: 10px; }
+    .age-track { height: 8px; overflow: hidden; border-radius: 999px; background: #f3f4f6; }
+    .age-fill { height: 100%; border-radius: inherit; background: var(--primary); }
+
+    .alert-strip { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .alert-card { padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 11px; background: white; }
+    .alert-card > svg { width: 20px; height: 20px; flex: 0 0 auto; }
+    .alert-card strong { display: block; font-size: 12px; }
+    .alert-card span { color: var(--muted); font-size: 10px; }
+    .alert-card.red > svg { color: #dc2626; }
+    .alert-card.amber > svg { color: #d97706; }
+    .alert-card.blue > svg { color: #2563eb; }
+
+    .toolbar { margin-bottom: 14px; padding: 13px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 11px; background: white; }
+    .field-search { position: relative; flex: 1 1 260px; }
+    .field-search svg { position: absolute; left: 11px; top: 10px; width: 16px; height: 16px; color: #a1a1aa; }
+    .field-search input, .toolbar select { width: 100%; height: 37px; border: 1px solid var(--border); border-radius: 8px; background: #fafafa; }
+    .field-search input { padding: 0 12px 0 35px; }
+    .toolbar select { width: 155px; padding: 0 28px 0 10px; }
+    .result-count { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .table-card { overflow: hidden; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 990px; }
+    th { height: 43px; padding: 0 14px; color: #71717a; background: #fafafa; border-bottom: 1px solid var(--border); font-size: 10px; letter-spacing: .04em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 13px 14px; border-bottom: 1px solid #f1f5f9; color: #3f3f46; font-size: 12px; vertical-align: middle; }
+    tbody tr:hover { background: #fafafa; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .item-cell { display: flex; align-items: center; gap: 10px; }
+    .item-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; color: var(--primary-strong); background: var(--primary-soft); font-weight: 750; }
+    .item-name strong { display: block; color: #27272a; }
+    .item-name span { color: #a1a1aa; font-size: 10px; }
+    .qty { color: #18181b; font-weight: 700; }
+    .row-actions { display: flex; gap: 3px; justify-content: flex-end; }
+    .row-actions button { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 7px; color: #71717a; background: transparent; }
+    .row-actions button:hover { color: #18181b; background: #f4f4f5; }
+    .row-actions svg { width: 15px; height: 15px; }
+    .pagination { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+    .page-buttons { display: flex; gap: 4px; }
+    .page-buttons button { min-width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px; background: white; }
+    .page-buttons button.current { color: white; background: var(--primary); border-color: var(--primary); }
+    .empty { padding: 48px 20px; color: var(--muted); text-align: center; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.48); backdrop-filter: blur(3px); }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(820px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; border-radius: 14px; background: white; box-shadow: 0 24px 70px rgba(15,23,42,.25); animation: modal-in .18s ease; }
+    @keyframes modal-in { from { opacity: 0; transform: scale(.98) translateY(5px); } to { opacity: 1; transform: none; } }
+    .modal-header, .modal-footer { padding: 17px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .modal-header { border-bottom: 1px solid var(--border); }
+    .modal-footer { border-top: 1px solid var(--border); }
+    .modal-title p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .form { padding: 19px 20px; }
+    .form-section { margin-bottom: 21px; }
+    .form-section:last-child { margin-bottom: 0; }
+    .form-section-title { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .form-field { min-width: 0; }
+    .form-field.span-2 { grid-column: span 2; }
+    .form-field label { margin-bottom: 6px; display: block; color: #52525b; font-size: 11px; font-weight: 650; }
+    .required::after { content: " *"; color: #dc2626; }
+    .form-field input, .form-field select { width: 100%; height: 39px; padding: 0 10px; border: 1px solid #d4d4d8; border-radius: 8px; color: #27272a; background: white; }
+    .form-field small { margin-top: 5px; display: block; color: #a1a1aa; font-size: 9px; }
+    .switch-row { min-height: 39px; display: flex; align-items: center; gap: 10px; }
+    .switch { position: relative; width: 38px; height: 22px; border: 0; border-radius: 999px; background: #d4d4d8; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: left .15s ease; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .switch.on { background: var(--primary); }
+    .switch.on::after { left: 19px; }
+    .toast { position: fixed; right: 20px; bottom: 20px; z-index: 80; padding: 12px 15px; display: flex; align-items: center; gap: 9px; border-radius: 10px; color: white; background: #171717; box-shadow: 0 12px 35px rgba(15,23,42,.24); opacity: 0; transform: translateY(12px); pointer-events: none; transition: .2s ease; }
+    .toast.show { opacity: 1; transform: none; }
+    .toast svg { width: 17px; height: 17px; color: #86efac; }
+
+    @media (max-width: 1100px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .context-select.location { display: none; }
+    }
+    @media (max-width: 760px) {
+      .sidebar { transform: translateX(-100%); width: 260px; box-shadow: 12px 0 40px rgba(15,23,42,.15); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .sidebar.collapsed { width: 260px; }
+      .sidebar.collapsed .brand-copy, .sidebar.collapsed .nav-label, .sidebar.collapsed .nav-section, .sidebar.collapsed .profile-copy, .sidebar.collapsed .env { display: block; }
+      .sidebar.collapsed .nav-item { justify-content: flex-start; padding-inline: 11px; }
+      .shell, .sidebar.collapsed + .shell { width: 100%; margin-left: 0; }
+      .topbar { padding: 0 14px; }
+      .global-search { display: none; }
+      .context-select, .role-chip, .top-user { display: none; }
+      main { padding: 18px 14px; }
+      .page-header { flex-direction: column; }
+      .stats { grid-template-columns: 1fr; }
+      .alert-strip { grid-template-columns: 1fr; }
+      .metric-strip { grid-template-columns: repeat(2, 1fr); }
+      .summary-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-field.span-2 { grid-column: auto; }
+      .toolbar select { width: calc(50% - 5px); }
+      .result-count { width: 100%; margin-left: 0; }
+      .metric-strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M6 21V5l6-3v19m6 0V9l-6-2M9 9h.01M9 13h.01M9 17h.01M15 13h.01M15 17h.01"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m21 8-9-5-9 5 9 5 9-5Z"/><path d="m3 8 9 5 9-5v8l-9 5-9-5V8Z"/><path d="M12 13v8"/></symbol>
+    <symbol id="i-boxes" viewBox="0 0 24 24"><path d="m2 7 5-3 5 3-5 3-5-3Zm10 0 5-3 5 3-5 3-5-3ZM2 17l5-3 5 3-5 3-5-3Zm10 0 5-3 5 3-5 3-5-3Z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M10 17h4V5H2v12h3"/><path d="M14 9h4l4 4v4h-3M14 17h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></symbol>
+    <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 21V10l6 3V9l6 4V6h6v15H3Z"/><path d="M7 17h.01M11 17h.01M15 17h.01M19 17h.01"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 1 4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M3 4h2l2.4 11.4A2 2 0 0 0 9.4 17H19a2 2 0 0 0 2-1.6L22 8H6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1 1.55V21h-4v-.08a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3v-4h.08a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3h4v.08a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21v4h-.08a1.7 1.7 0 0 0-1.55 1Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 2.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 5V3h4M17 3h4v2M21 19v2h-4M7 21H3v-2M7 8v8M10 8v8M14 8v8M17 8v8"/></symbol>
+  </svg>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><svg><use href="#i-building"/></svg></div>
+        <div class="brand-copy"><strong>Dwarka IMS</strong><span>Inventory &amp; Production</span></div>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <div class="nav-section">Overview</div>
+        <button class="nav-item active" data-view="dashboard"><svg><use href="#i-dashboard"/></svg><span class="nav-label">Dashboard</span></button>
+        <div class="nav-section">Masters</div>
+        <button class="nav-item" data-view="items"><svg><use href="#i-package"/></svg><span class="nav-label">Items</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-users"/></svg><span class="nav-label">Business Partners</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-building"/></svg><span class="nav-label">Locations</span></button>
+        <div class="nav-section">Operations</div>
+        <button class="nav-item demo-link"><svg><use href="#i-cart"/></svg><span class="nav-label">Purchasing</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-factory"/></svg><span class="nav-label">Production</span></button>
+        <button class="nav-item" data-view="jobWork"><svg><use href="#i-truck"/></svg><span class="nav-label">Job Work</span><span class="nav-badge">6</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-boxes"/></svg><span class="nav-label">Inventory</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-repeat"/></svg><span class="nav-label">Transfers</span><span class="nav-badge">3</span></button>
+        <div class="nav-section">Insights</div>
+        <button class="nav-item demo-link"><svg><use href="#i-chart"/></svg><span class="nav-label">Analytics</span></button>
+        <button class="nav-item demo-link"><svg><use href="#i-file"/></svg><span class="nav-label">Reports</span></button>
+        <div class="nav-section">Administration</div>
+        <button class="nav-item demo-link"><svg><use href="#i-settings"/></svg><span class="nav-label">Settings</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="profile"><div class="avatar">PV</div><div class="profile-copy"><strong>Pradeep Verma</strong><span>Administrator</span></div></div>
+        <div class="env">Oracle APEX 26.2 prototype</div>
+      </div>
+    </aside>
+
+    <section class="shell">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="icon-button" id="menuButton" aria-label="Toggle navigation"><svg><use href="#i-menu"/></svg></button>
+          <div class="global-search"><svg><use href="#i-search"/></svg><input id="globalSearch" type="search" placeholder="Search items, documents, parties..." aria-label="Global search"><span class="shortcut">Ctrl K</span></div>
+        </div>
+        <div class="top-right">
+          <select class="context-select" aria-label="Business"><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option><option>All Businesses</option></select>
+          <select class="context-select location" aria-label="Location"><option>All Locations</option><option>Factory 1</option><option>Factory 2</option><option>Job Worker Stock</option></select>
+          <span class="role-chip">Admin</span>
+          <button class="icon-button notification" aria-label="Notifications"><svg><use href="#i-bell"/></svg></button>
+          <div class="top-user avatar">PV</div>
+        </div>
+      </header>
+
+      <main>
+        <section class="view active" id="dashboardView">
+          <div class="page-header">
+            <div><div class="eyebrow">Sunday, 18 October 2026</div><h1>Operations Dashboard</h1><p class="subtitle">Live inventory and production overview across both businesses.</p></div>
+            <div class="actions"><button class="button" id="scanButton"><svg><use href="#i-scan"/></svg>Scan barcode</button><button class="button primary" id="quickItem"><svg><use href="#i-plus"/></svg>New item</button></div>
+          </div>
+
+          <div class="stats">
+            <article class="stat-card blue"><div><div class="stat-label">Total stock</div><div class="stat-value">128.6 t</div><div class="trend"><b>+4.8%</b><span>vs last month</span></div></div><div class="stat-icon"><svg><use href="#i-boxes"/></svg></div></article>
+            <article class="stat-card green"><div><div class="stat-label">Today's production</div><div class="stat-value">6,840 kg</div><div class="trend"><b>92%</b><span>of daily target</span></div></div><div class="stat-icon"><svg><use href="#i-factory"/></svg></div></article>
+            <article class="stat-card violet"><div><div class="stat-label">At job workers</div><div class="stat-value">18,420 kg</div><div class="trend"><b>14 open</b><span>job-work orders</span></div></div><div class="stat-icon"><svg><use href="#i-truck"/></svg></div></article>
+            <article class="stat-card amber"><div><div class="stat-label">Low stock items</div><div class="stat-value">23</div><div class="trend"><b>7 critical</b><span>require action</span></div></div><div class="stat-icon"><svg><use href="#i-alert"/></svg></div></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="card">
+              <div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Stock Inward by Source</h2></div><div class="card-note">Last six months · metric tonnes</div></div><select class="context-select" aria-label="Chart period"><option>6 months</option><option>12 months</option></select></div>
+              <div class="chart-wrap">
+                <div class="chart">
+                  <div class="chart-y"><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span></div>
+                  <div class="chart-grid"><span></span><span></span><span></span><span></span><span></span></div>
+                  <div class="bars">
+                    <div class="bar-group"><i class="bar production" style="height:58%" title="Production 23t"></i><i class="bar purchase" style="height:40%" title="Purchase 16t"></i><span class="bar-label">May</span></div>
+                    <div class="bar-group"><i class="bar production" style="height:66%" title="Production 26t"></i><i class="bar purchase" style="height:48%" title="Purchase 19t"></i><span class="bar-label">Jun</span></div>
+                    <div class="bar-group"><i class="bar production" style="height:62%" title="Production 25t"></i><i class="bar purchase" style="height:55%" title="Purchase 22t"></i><span class="bar-label">Jul</span></div>
+                    <div class="bar-group"><i class="bar production" style="height:78%" title="Production 31t"></i><i class="bar purchase" style="height:43%" title="Purchase 17t"></i><span class="bar-label">Aug</span></div>
+                    <div class="bar-group"><i class="bar production" style="height:70%" title="Production 28t"></i><i class="bar purchase" style="height:60%" title="Purchase 24t"></i><span class="bar-label">Sep</span></div>
+                    <div class="bar-group"><i class="bar production" style="height:86%" title="Production 34t"></i><i class="bar purchase" style="height:52%" title="Purchase 21t"></i><span class="bar-label">Oct</span></div>
+                  </div>
+                </div>
+                <div class="chart-legend"><span><i style="background:#dc2626"></i>Manufactured</span><span><i style="background:#262626"></i>Purchased</span></div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Recent Activity</h2></div><div class="card-note">Latest posted transactions</div></div><button class="button" style="min-height:32px;padding:6px 9px">View all</button></div>
+              <div class="activity-list">
+                <div class="activity"><div class="activity-icon green"><svg><use href="#i-cart"/></svg></div><div><p>Purchase receipt GRN-2610-018 posted</p><small>MS Wire 8 mm · 2,450 kg · Factory 1</small></div><span class="tag ok">Posted</span></div>
+                <div class="activity"><div class="activity-icon violet"><svg><use href="#i-factory"/></svg></div><div><p>Production batch PB-2610-047 completed</p><small>Hex Bolt M10 × 50 · 1,260 kg</small></div><span class="tag ok">Posted</span></div>
+                <div class="activity"><div class="activity-icon amber"><svg><use href="#i-truck"/></svg></div><div><p>Partial job-work receipt awaiting review</p><small>JW-2610-014 · Zinc plating · 840 kg</small></div><span class="tag pending">Review</span></div>
+                <div class="activity"><div class="activity-icon blue"><svg><use href="#i-repeat"/></svg></div><div><p>Inter-company transfer dispatched</p><small>ICT-2610-009 · 1,100 kg · In transit</small></div><span class="tag active">Transit</span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="alert-strip">
+            <div class="alert-card red"><svg><use href="#i-alert"/></svg><div><strong>7 critical stock exceptions</strong><span>Below minimum stock at one or more locations</span></div></div>
+            <div class="alert-card amber"><svg><use href="#i-clock"/></svg><div><strong>6 overdue job-work orders</strong><span>Oldest outstanding for 18 days</span></div></div>
+            <div class="alert-card blue"><svg><use href="#i-repeat"/></svg><div><strong>3 transfers in transit</strong><span>Awaiting receipt confirmation</span></div></div>
+          </div>
+        </section>
+
+        <section class="view" id="itemsView">
+          <div class="page-header">
+            <div><div class="eyebrow">Masters / Items</div><h1>Item Master</h1><p class="subtitle">Manage raw materials, semi-finished goods, finished goods, traded items, scrap, tools and dies.</p></div>
+            <div class="actions"><button class="button" id="exportButton"><svg><use href="#i-download"/></svg>Export</button><button class="button primary" id="addItem"><svg><use href="#i-plus"/></svg>Add item</button></div>
+          </div>
+
+          <div class="toolbar">
+            <div class="field-search"><svg><use href="#i-search"/></svg><input id="itemSearch" type="search" placeholder="Search by item code, name, barcode or alias..."></div>
+            <select id="categoryFilter" aria-label="Filter by category"><option value="">All categories</option><option>Raw Material</option><option>Finished Goods</option><option>Semi-Finished</option><option>Scrap</option></select>
+            <select id="sourceFilter" aria-label="Filter by source"><option value="">All sources</option><option value="BOTH">Both</option><option value="MANUFACTURED">Manufactured</option><option value="PURCHASED">Purchased</option></select>
+            <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select>
+            <span class="result-count" id="resultCount">6 items</span>
+          </div>
+
+          <article class="card table-card">
+            <div class="table-wrap">
+              <table aria-label="Item master list">
+                <thead><tr><th>Item</th><th>Category</th><th>Grade / Finish</th><th>Source</th><th>Stock UOM</th><th>On hand</th><th>Status</th><th aria-label="Actions"></th></tr></thead>
+                <tbody id="itemRows"></tbody>
+              </table>
+              <div class="empty" id="emptyState" hidden>No items match the selected filters.</div>
+            </div>
+            <div class="pagination"><span>Showing <b id="shownCount">6</b> of <b id="totalCount">6</b> items</span><div class="page-buttons"><button aria-label="Previous page">‹</button><button class="current">1</button><button>2</button><button aria-label="Next page">›</button></div></div>
+          </article>
+        </section>
+
+        <section class="view" id="jobWorkView">
+          <div class="page-header">
+            <div><div class="eyebrow">Operations / Job Work</div><h1>Job Work Management</h1><p class="subtitle">Track plating and external processing from dispatch through partial receipt, variance review and closure.</p></div>
+            <div class="actions"><button class="button" id="jobWorkExport"><svg><use href="#i-download"/></svg>Export balance</button><button class="button primary" id="newJobWork"><svg><use href="#i-plus"/></svg>New job work</button></div>
+          </div>
+
+          <div class="metric-strip">
+            <article class="metric-card"><div class="metric-icon red"><svg><use href="#i-truck"/></svg></div><div class="metric-copy"><span>Material at job workers</span><strong>18,420 kg</strong><small>Company-owned external custody</small></div></article>
+            <article class="metric-card"><div class="metric-icon blue"><svg><use href="#i-file"/></svg></div><div class="metric-copy"><span>Open job-work orders</span><strong>14</strong><small>Across 6 job workers</small></div></article>
+            <article class="metric-card"><div class="metric-icon amber"><svg><use href="#i-clock"/></svg></div><div class="metric-copy"><span>Overdue orders</span><strong>6</strong><small>Oldest open for 18 days</small></div></article>
+            <article class="metric-card"><div class="metric-icon green"><svg><use href="#i-repeat"/></svg></div><div class="metric-copy"><span>Received this month</span><strong>12,860 kg</strong><small>93.4% accepted quantity</small></div></article>
+          </div>
+
+          <div class="toolbar">
+            <div class="field-search"><svg><use href="#i-search"/></svg><input id="jobWorkSearch" type="search" placeholder="Search job-work ID, worker, item or challan..."></div>
+            <select id="jobWorkerFilter" aria-label="Filter by job worker"><option value="">All job workers</option><option>Bright Zinc Works</option><option>Sri Sai Electroplaters</option><option>Metro Coatings</option></select>
+            <select id="jobStatusFilter" aria-label="Filter by job-work status"><option value="">All open statuses</option><option value="DISPATCHED">Dispatched</option><option value="PARTIAL">Partially received</option><option value="OVERDUE">Overdue</option><option value="CLOSED">Closed</option></select>
+            <select id="jobProcessFilter" aria-label="Filter by process"><option value="">All processes</option><option>Zinc Plating</option><option>Hot Dip Galvanizing</option><option>Black Oxide</option></select>
+            <span class="result-count" id="jobResultCount">6 orders</span>
+          </div>
+
+          <article class="card table-card">
+            <div class="table-wrap">
+              <table aria-label="Job work orders">
+                <thead><tr><th>Job Work ID</th><th>Job Worker / Process</th><th>Item</th><th>Dispatch</th><th>Received</th><th>Outstanding</th><th>Progress</th><th>Due / Age</th><th>Status</th><th aria-label="Actions"></th></tr></thead>
+                <tbody id="jobWorkRows"></tbody>
+              </table>
+              <div class="empty" id="jobEmptyState" hidden>No job-work orders match the selected filters.</div>
+            </div>
+            <div class="pagination"><span>Showing <b id="jobShownCount">6</b> of <b id="jobTotalCount">6</b> orders</span><div class="page-buttons"><button aria-label="Previous page">‹</button><button class="current">1</button><button aria-label="Next page">›</button></div></div>
+          </article>
+
+          <div class="summary-grid">
+            <article class="card"><div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Job Worker Balance</h2></div><div class="card-note">Outstanding material in external custody</div></div></div><div class="balance-list"><div class="balance-row"><div><strong>Bright Zinc Works</strong><span>5 open orders · Zinc plating</span></div><b>7,280 kg</b></div><div class="balance-row"><div><strong>Sri Sai Electroplaters</strong><span>4 open orders · Zinc / Black oxide</span></div><b>5,940 kg</b></div><div class="balance-row"><div><strong>Metro Coatings</strong><span>3 open orders · Hot dip galvanizing</span></div><b>3,600 kg</b></div><div class="balance-row"><div><strong>Other job workers</strong><span>2 open orders</span></div><b>1,600 kg</b></div></div></article>
+            <article class="card"><div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Outstanding Ageing</h2></div><div class="card-note">Open quantity by dispatch age</div></div></div><div class="age-bars"><div class="age-row"><span>0–7 days</span><div class="age-track"><div class="age-fill" style="width:100%"></div></div><b>8,920 kg</b></div><div class="age-row"><span>8–15 days</span><div class="age-track"><div class="age-fill" style="width:61%"></div></div><b>5,440 kg</b></div><div class="age-row"><span>16–30 days</span><div class="age-track"><div class="age-fill" style="width:34%"></div></div><b>3,060 kg</b></div><div class="age-row"><span>30+ days</span><div class="age-track"><div class="age-fill" style="width:11%"></div></div><b>1,000 kg</b></div></div></article>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title"><h2 id="modalHeading">Add Item</h2><p>Fields marked with an asterisk are required.</p></div><button class="icon-button" id="closeModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <form id="itemForm">
+        <div class="form">
+          <div class="form-section">
+            <div class="form-section-title">Item identity</div>
+            <div class="form-grid">
+              <div class="form-field"><label class="required" for="itemCode">Item code</label><input id="itemCode" required placeholder="e.g. BLT-M10-050-88"></div>
+              <div class="form-field span-2"><label class="required" for="itemName">Item name</label><input id="itemName" required placeholder="e.g. Hex Bolt M10 × 50"></div>
+              <div class="form-field"><label class="required" for="itemCategory">Category</label><select id="itemCategory" required><option value="">Select category</option><option>Raw Material</option><option>Finished Goods</option><option>Semi-Finished</option><option>Scrap</option><option>Tools & Dies</option></select></div>
+              <div class="form-field"><label class="required" for="itemSource">Source policy</label><select id="itemSource" required><option value="BOTH">Manufactured & Purchased</option><option value="MANUFACTURED">Manufactured</option><option value="PURCHASED">Purchased</option></select><small>One item can be both manufactured and traded.</small></div>
+              <div class="form-field"><label class="required" for="itemUom">Stock UOM</label><select id="itemUom" required><option>KG</option><option>NOS</option></select></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Specifications</div>
+            <div class="form-grid">
+              <div class="form-field"><label for="itemSize">Size</label><input id="itemSize" placeholder="M10"></div>
+              <div class="form-field"><label for="itemLength">Length</label><input id="itemLength" placeholder="50 mm"></div>
+              <div class="form-field"><label for="itemGrade">Grade</label><select id="itemGrade"><option>8.8</option><option>4.6</option><option>SS 202</option><option>SS 304</option><option>MS</option></select></div>
+              <div class="form-field"><label for="itemFinish">Finish</label><select id="itemFinish"><option>Plain</option><option>Zinc Plated</option><option>Black Oxide</option><option>Hot Dip Galvanized</option></select></div>
+              <div class="form-field"><label for="itemBarcode">Barcode</label><input id="itemBarcode" placeholder="8900000000000"></div>
+              <div class="form-field"><label for="itemPack">Standard pack</label><select id="itemPack"><option>1000 NOS</option><option>2000 NOS</option><option>5000 NOS</option><option>Not applicable</option></select></div>
+            </div>
+          </div>
+          <div class="form-section">
+            <div class="form-section-title">Controls</div>
+            <div class="form-grid">
+              <div class="form-field"><label for="minStock">Minimum stock</label><input id="minStock" type="number" min="0" step="0.001" value="500"></div>
+              <div class="form-field"><label for="conversion">NOS per KG</label><input id="conversion" type="number" min="0" step="0.001" placeholder="Optional"><small>Effective-dated conversion in the final application.</small></div>
+              <div class="form-field"><label>Active</label><div class="switch-row"><button type="button" class="switch on" id="activeSwitch" aria-pressed="true" aria-label="Toggle active status"></button><span id="activeLabel">Available for transactions</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="button" id="cancelModal">Cancel</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Save item</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="jobWorkModal" role="dialog" aria-modal="true" aria-labelledby="jobWorkModalHeading">
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title"><h2 id="jobWorkModalHeading">New Job Work Dispatch</h2><p>A Job Work ID will be generated when the dispatch is saved.</p></div><button class="icon-button" id="closeJobWorkModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <form id="jobWorkForm">
+        <div class="form">
+          <div class="form-section"><div class="form-section-title">Dispatch details</div><div class="form-grid">
+            <div class="form-field"><label class="required" for="jwBusiness">Business</label><select id="jwBusiness" required><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select></div>
+            <div class="form-field"><label class="required" for="jwWorker">Job worker</label><select id="jwWorker" required><option value="">Select job worker</option><option>Bright Zinc Works</option><option>Sri Sai Electroplaters</option><option>Metro Coatings</option></select></div>
+            <div class="form-field"><label class="required" for="jwProcess">Process</label><select id="jwProcess" required><option>Zinc Plating</option><option>Hot Dip Galvanizing</option><option>Black Oxide</option></select></div>
+            <div class="form-field"><label class="required" for="jwDate">Dispatch date</label><input id="jwDate" type="date" value="2026-10-18" required></div>
+            <div class="form-field"><label class="required" for="jwDue">Expected return</label><input id="jwDue" type="date" value="2026-10-25" required></div>
+            <div class="form-field"><label for="jwChallan">Dispatch challan</label><input id="jwChallan" placeholder="e.g. DC-2610-118"></div>
+          </div></div>
+          <div class="form-section"><div class="form-section-title">Material</div><div class="form-grid">
+            <div class="form-field span-2"><label class="required" for="jwItem">Item</label><select id="jwItem" required><option value="">Select material</option><option>Unplated Bolt M10 × 50</option><option>Hex Nut M10</option><option>Plain Washer M10</option></select><small>Material moves to the selected job worker's external custody location.</small></div>
+            <div class="form-field"><label class="required" for="jwQty">Dispatch quantity</label><input id="jwQty" type="number" min="0.001" step="0.001" placeholder="0.000" required></div>
+            <div class="form-field"><label>Stock UOM</label><input value="KG" disabled></div>
+            <div class="form-field span-2"><label for="jwNotes">Instructions</label><input id="jwNotes" placeholder="Finish, thickness or handling instructions"></div>
+          </div></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="button" id="cancelJobWorkModal">Cancel</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Save dispatch</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="receiptModal" role="dialog" aria-modal="true" aria-labelledby="receiptModalHeading">
+    <div class="modal" style="width:min(620px,100%)">
+      <div class="modal-header"><div class="modal-title"><h2 id="receiptModalHeading">Record Job Work Receipt</h2><p id="receiptContext">Partial and full receipts are supported.</p></div><button class="icon-button" id="closeReceiptModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <form id="receiptForm">
+        <div class="form"><div class="form-grid">
+          <div class="form-field"><label class="required" for="receiptDate">Receipt date</label><input id="receiptDate" type="date" value="2026-10-18" required></div>
+          <div class="form-field"><label class="required" for="receiptQty">Accepted quantity</label><input id="receiptQty" type="number" min="0" step="0.001" required></div>
+          <div class="form-field"><label for="rejectedQty">Rejected quantity</label><input id="rejectedQty" type="number" min="0" step="0.001" value="0"></div>
+          <div class="form-field"><label for="varianceQty">Loss / variance</label><input id="varianceQty" type="number" min="0" step="0.001" value="0"></div>
+          <div class="form-field span-2"><label for="varianceReason">Variance reason</label><input id="varianceReason" placeholder="Required before closure when variance exists"></div>
+        </div></div>
+        <div class="modal-footer"><button type="button" class="button" id="cancelReceiptModal">Cancel</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Save receipt</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"><svg><use href="#i-check"/></svg><span id="toastText">Done</span></div>
+
+  <script>
+    const items = [
+      { code:'BLT-M10-050-88', name:'Hex Bolt M10 × 50', alias:'M10 bolt 50mm', category:'Finished Goods', grade:'8.8', finish:'Zinc Plated', source:'BOTH', uom:'KG', qty:'8,460.500', status:'ACTIVE', barcode:'8901026100118' },
+      { code:'NUT-M10-88-ZP', name:'Hex Nut M10', alias:'M10 zinc nut', category:'Finished Goods', grade:'8.8', finish:'Zinc Plated', source:'BOTH', uom:'KG', qty:'4,238.250', status:'ACTIVE', barcode:'8901026100125' },
+      { code:'MSW-08-COIL', name:'MS Wire 8 mm Coil', alias:'8mm wire rod', category:'Raw Material', grade:'MS', finish:'Plain', source:'PURCHASED', uom:'KG', qty:'22,750.000', status:'ACTIVE', barcode:'8901026100200' },
+      { code:'WSR-PLN-M10', name:'Plain Washer M10', alias:'M10 flat washer', category:'Finished Goods', grade:'SS 304', finish:'Plain', source:'BOTH', uom:'KG', qty:'3,145.750', status:'ACTIVE', barcode:'8901026100316' },
+      { code:'SFG-BLT-M10', name:'Unplated Bolt M10 × 50', alias:'M10 semi finished', category:'Semi-Finished', grade:'8.8', finish:'Plain', source:'MANUFACTURED', uom:'KG', qty:'1,840.000', status:'ACTIVE', barcode:'8901026100415' },
+      { code:'SCRAP-MS-MIX', name:'Mixed MS Scrap', alias:'production scrap', category:'Scrap', grade:'MS', finish:'Mixed', source:'MANUFACTURED', uom:'KG', qty:'786.300', status:'INACTIVE', barcode:'8901026100514' }
+    ];
+
+    const jobWorkOrders = [
+      { id:'JW-2610-014', worker:'Bright Zinc Works', process:'Zinc Plating', item:'Unplated Bolt M10 × 50', challan:'DC-2610-091', dispatch:2400, received:840, due:'16 Oct', age:12, status:'OVERDUE' },
+      { id:'JW-2610-018', worker:'Sri Sai Electroplaters', process:'Black Oxide', item:'Hex Nut M10', challan:'DC-2610-104', dispatch:1800, received:900, due:'21 Oct', age:7, status:'PARTIAL' },
+      { id:'JW-2610-021', worker:'Metro Coatings', process:'Hot Dip Galvanizing', item:'Foundation Bolt M16 × 300', challan:'DC-2610-109', dispatch:3200, received:0, due:'24 Oct', age:5, status:'DISPATCHED' },
+      { id:'JW-2610-022', worker:'Bright Zinc Works', process:'Zinc Plating', item:'Plain Washer M10', challan:'DC-2610-112', dispatch:1500, received:500, due:'25 Oct', age:4, status:'PARTIAL' },
+      { id:'JW-2610-024', worker:'Sri Sai Electroplaters', process:'Zinc Plating', item:'Hex Bolt M8 × 35', challan:'DC-2610-116', dispatch:2100, received:0, due:'27 Oct', age:2, status:'DISPATCHED' },
+      { id:'JW-2609-087', worker:'Metro Coatings', process:'Hot Dip Galvanizing', item:'Foundation Bolt M20 × 450', challan:'DC-2609-388', dispatch:2800, received:2772, due:'28 Sep', age:25, status:'CLOSED' }
+    ];
+
+    const $ = (selector, root=document) => root.querySelector(selector);
+    const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
+    const icon = id => `<svg><use href="#${id}"/></svg>`;
+    const sourceMeta = {
+      BOTH: ['Both', 'both'],
+      MANUFACTURED: ['Manufactured', 'made'],
+      PURCHASED: ['Purchased', 'bought']
+    };
+    let editingCode = null;
+    let activeValue = true;
+    let receivingJobId = null;
+
+    function showToast(message) {
+      $('#toastText').textContent = message;
+      $('#toast').classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 2200);
+    }
+
+    function setView(view) {
+      $$('.view').forEach(el => el.classList.remove('active'));
+      $$('.nav-item[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === view));
+      $(`#${view}View`).classList.add('active');
+      if (window.innerWidth <= 760) $('#sidebar').classList.remove('mobile-open');
+      if (view === 'items') renderItems();
+      if (view === 'jobWork') renderJobWork();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderItems() {
+      const query = $('#itemSearch').value.trim().toLowerCase();
+      const category = $('#categoryFilter').value;
+      const source = $('#sourceFilter').value;
+      const status = $('#statusFilter').value;
+      const filtered = items.filter(item => {
+        const haystack = `${item.code} ${item.name} ${item.alias} ${item.barcode}`.toLowerCase();
+        return (!query || haystack.includes(query)) && (!category || item.category === category) && (!source || item.source === source) && (!status || item.status === status);
+      });
+      $('#itemRows').innerHTML = filtered.map(item => {
+        const [sourceLabel, sourceClass] = sourceMeta[item.source];
+        return `<tr>
+          <td><div class="item-cell"><div class="item-mark">${item.name.split(' ').slice(0,2).map(x=>x[0]).join('')}</div><div class="item-name"><strong>${item.name}</strong><span>${item.code} · ${item.barcode}</span></div></div></td>
+          <td>${item.category}</td><td>${item.grade} / ${item.finish}</td><td><span class="tag ${sourceClass}">${sourceLabel}</span></td>
+          <td>${item.uom}</td><td class="qty">${item.qty}</td><td><span class="tag ${item.status === 'ACTIVE' ? 'ok' : 'inactive'}">${item.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span></td>
+          <td><div class="row-actions"><button data-action="view" data-code="${item.code}" title="View item" aria-label="View ${item.name}">${icon('i-eye')}</button><button data-action="edit" data-code="${item.code}" title="Edit item" aria-label="Edit ${item.name}">${icon('i-edit')}</button></div></td>
+        </tr>`;
+      }).join('');
+      $('#emptyState').hidden = filtered.length !== 0;
+      $('#shownCount').textContent = filtered.length;
+      $('#totalCount').textContent = items.length;
+      $('#resultCount').textContent = `${filtered.length} item${filtered.length === 1 ? '' : 's'}`;
+    }
+
+    function renderJobWork() {
+      const query = $('#jobWorkSearch').value.trim().toLowerCase();
+      const worker = $('#jobWorkerFilter').value;
+      const status = $('#jobStatusFilter').value;
+      const process = $('#jobProcessFilter').value;
+      const filtered = jobWorkOrders.filter(order => {
+        const haystack = `${order.id} ${order.worker} ${order.item} ${order.challan}`.toLowerCase();
+        return (!query || haystack.includes(query)) && (!worker || order.worker === worker) && (!status || order.status === status) && (!process || order.process === process);
+      });
+      const statusMeta = {
+        DISPATCHED: ['Dispatched', 'dispatched'],
+        PARTIAL: ['Partial receipt', 'partial'],
+        OVERDUE: ['Overdue', 'overdue'],
+        CLOSED: ['Closed', 'closed']
+      };
+      $('#jobWorkRows').innerHTML = filtered.map(order => {
+        const outstanding = Math.max(order.dispatch - order.received, 0);
+        const progress = Math.min(Math.round((order.received / order.dispatch) * 100), 100);
+        const [statusLabel, statusClass] = statusMeta[order.status];
+        const canReceive = order.status !== 'CLOSED';
+        return `<tr>
+          <td><span class="job-code">${order.id}</span><br><span class="card-note">${order.challan}</span></td>
+          <td><strong>${order.worker}</strong><br><span class="card-note">${order.process}</span></td>
+          <td>${order.item}</td><td class="qty">${order.dispatch.toLocaleString('en-IN')} kg</td><td>${order.received.toLocaleString('en-IN')} kg</td><td class="outstanding">${outstanding.toLocaleString('en-IN')} kg</td>
+          <td><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="progress-copy">${progress}% received</div></td>
+          <td class="${order.status === 'OVERDUE' ? 'overdue-text' : ''}">${order.due}<br><span class="card-note">${order.age} days</span></td><td><span class="tag ${statusClass}">${statusLabel}</span></td>
+          <td><div class="row-actions"><button data-jw-action="view" data-id="${order.id}" title="View job work" aria-label="View ${order.id}">${icon('i-eye')}</button>${canReceive ? `<button data-jw-action="receipt" data-id="${order.id}" title="Record receipt" aria-label="Record receipt for ${order.id}">${icon('i-repeat')}</button>` : ''}</div></td>
+        </tr>`;
+      }).join('');
+      $('#jobEmptyState').hidden = filtered.length !== 0;
+      $('#jobShownCount').textContent = filtered.length;
+      $('#jobTotalCount').textContent = jobWorkOrders.length;
+      $('#jobResultCount').textContent = `${filtered.length} order${filtered.length === 1 ? '' : 's'}`;
+    }
+
+    function openItemModal(item=null, readOnly=false) {
+      editingCode = item?.code || null;
+      $('#modalHeading').textContent = readOnly ? 'View Item' : item ? 'Edit Item' : 'Add Item';
+      $('#itemCode').value = item?.code || '';
+      $('#itemName').value = item?.name || '';
+      $('#itemCategory').value = item?.category || '';
+      $('#itemSource').value = item?.source || 'BOTH';
+      $('#itemUom').value = item?.uom || 'KG';
+      $('#itemGrade').value = item?.grade || '8.8';
+      $('#itemFinish').value = item?.finish || 'Plain';
+      $('#itemBarcode').value = item?.barcode || '';
+      $('#itemSize').value = item?.name.match(/M\d+/)?.[0] || '';
+      $('#itemLength').value = item?.name.match(/×\s*(\d+)/)?.[1] ? `${item.name.match(/×\s*(\d+)/)[1]} mm` : '';
+      activeValue = item ? item.status === 'ACTIVE' : true;
+      updateSwitch();
+      $$('#itemForm input, #itemForm select').forEach(el => el.disabled = readOnly);
+      $('#itemForm button[type="submit"]').style.display = readOnly ? 'none' : 'inline-flex';
+      $('#itemModal').classList.add('open');
+      setTimeout(() => (readOnly ? $('#closeModal') : $('#itemCode')).focus(), 30);
+    }
+
+    function closeItemModal() { $('#itemModal').classList.remove('open'); }
+    function closeJobWorkModal() { $('#jobWorkModal').classList.remove('open'); }
+    function closeReceiptModal() { $('#receiptModal').classList.remove('open'); receivingJobId = null; }
+    function openReceiptModal(order) {
+      receivingJobId = order.id;
+      const outstanding = Math.max(order.dispatch - order.received, 0);
+      $('#receiptContext').textContent = `${order.id} · ${order.worker} · Outstanding ${outstanding.toLocaleString('en-IN')} kg`;
+      $('#receiptQty').value = outstanding;
+      $('#rejectedQty').value = 0;
+      $('#varianceQty').value = 0;
+      $('#varianceReason').value = '';
+      $('#receiptModal').classList.add('open');
+      setTimeout(() => $('#receiptQty').focus(), 30);
+    }
+    function updateSwitch() {
+      $('#activeSwitch').classList.toggle('on', activeValue);
+      $('#activeSwitch').setAttribute('aria-pressed', String(activeValue));
+      $('#activeLabel').textContent = activeValue ? 'Available for transactions' : 'Inactive for new transactions';
+    }
+
+    $$('.nav-item[data-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.view)));
+    $$('.demo-link').forEach(button => button.addEventListener('click', () => showToast(`${button.querySelector('.nav-label').textContent} will be designed in the next phase.`)));
+    $('#menuButton').addEventListener('click', () => window.innerWidth <= 760 ? $('#sidebar').classList.toggle('mobile-open') : $('#sidebar').classList.toggle('collapsed'));
+    $('#quickItem').addEventListener('click', () => openItemModal());
+    $('#addItem').addEventListener('click', () => openItemModal());
+    $('#scanButton').addEventListener('click', () => showToast('Barcode scanner entry point ready for APEX integration.'));
+    $('#exportButton').addEventListener('click', () => showToast('Item export prepared. APEX will generate the final file.'));
+    $('#jobWorkExport').addEventListener('click', () => showToast('Job-worker balance export prepared.'));
+    $('#newJobWork').addEventListener('click', () => { $('#jobWorkForm').reset(); $('#jwDate').value='2026-10-18'; $('#jwDue').value='2026-10-25'; $('#jobWorkModal').classList.add('open'); setTimeout(() => $('#jwWorker').focus(), 30); });
+    $('#closeModal').addEventListener('click', closeItemModal);
+    $('#cancelModal').addEventListener('click', closeItemModal);
+    $('#itemModal').addEventListener('click', e => { if (e.target === $('#itemModal')) closeItemModal(); });
+    $('#closeJobWorkModal').addEventListener('click', closeJobWorkModal);
+    $('#cancelJobWorkModal').addEventListener('click', closeJobWorkModal);
+    $('#jobWorkModal').addEventListener('click', e => { if (e.target === $('#jobWorkModal')) closeJobWorkModal(); });
+    $('#closeReceiptModal').addEventListener('click', closeReceiptModal);
+    $('#cancelReceiptModal').addEventListener('click', closeReceiptModal);
+    $('#receiptModal').addEventListener('click', e => { if (e.target === $('#receiptModal')) closeReceiptModal(); });
+    $('#activeSwitch').addEventListener('click', () => { activeValue = !activeValue; updateSwitch(); });
+    ['itemSearch','categoryFilter','sourceFilter','statusFilter'].forEach(id => $(`#${id}`).addEventListener('input', renderItems));
+    $('#itemRows').addEventListener('click', e => {
+      const button = e.target.closest('button[data-action]');
+      if (!button) return;
+      const item = items.find(row => row.code === button.dataset.code);
+      openItemModal(item, button.dataset.action === 'view');
+    });
+    ['jobWorkSearch','jobWorkerFilter','jobStatusFilter','jobProcessFilter'].forEach(id => $(`#${id}`).addEventListener('input', renderJobWork));
+    $('#jobWorkRows').addEventListener('click', e => {
+      const button = e.target.closest('button[data-jw-action]');
+      if (!button) return;
+      const order = jobWorkOrders.find(row => row.id === button.dataset.id);
+      if (button.dataset.jwAction === 'receipt') openReceiptModal(order);
+      else showToast(`${order.id}: ${order.dispatch.toLocaleString('en-IN')} kg dispatched, ${(order.dispatch - order.received).toLocaleString('en-IN')} kg outstanding.`);
+    });
+    $('#itemForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const record = {
+        code: $('#itemCode').value.trim(), name: $('#itemName').value.trim(), alias: '', category: $('#itemCategory').value,
+        grade: $('#itemGrade').value, finish: $('#itemFinish').value, source: $('#itemSource').value, uom: $('#itemUom').value,
+        qty: editingCode ? items.find(x => x.code === editingCode).qty : '0.000', status: activeValue ? 'ACTIVE' : 'INACTIVE',
+        barcode: $('#itemBarcode').value.trim() || 'Barcode pending'
+      };
+      const existingIndex = items.findIndex(x => x.code === editingCode);
+      if (existingIndex >= 0) items[existingIndex] = record; else items.unshift(record);
+      closeItemModal();
+      setView('items');
+      showToast(existingIndex >= 0 ? 'Item updated in prototype.' : 'Item added to prototype.');
+    });
+    $('#jobWorkForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const nextId = `JW-2610-${String(25 + jobWorkOrders.length).padStart(3,'0')}`;
+      jobWorkOrders.unshift({ id:nextId, worker:$('#jwWorker').value, process:$('#jwProcess').value, item:$('#jwItem').value, challan:$('#jwChallan').value || 'Challan pending', dispatch:Number($('#jwQty').value), received:0, due:'25 Oct', age:0, status:'DISPATCHED' });
+      closeJobWorkModal();
+      setView('jobWork');
+      showToast(`${nextId} created and material moved to external custody.`);
+    });
+    $('#receiptForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const order = jobWorkOrders.find(row => row.id === receivingJobId);
+      const accepted = Number($('#receiptQty').value || 0);
+      const rejected = Number($('#rejectedQty').value || 0);
+      const variance = Number($('#varianceQty').value || 0);
+      const remaining = order.dispatch - order.received;
+      if (accepted + rejected + variance > remaining) { showToast('Receipt and variance exceed the outstanding quantity.'); return; }
+      if (variance > 0 && !$('#varianceReason').value.trim()) { showToast('Enter a reason before recording variance.'); return; }
+      order.received += accepted;
+      const settled = order.received + rejected + variance >= order.dispatch;
+      order.status = settled ? 'CLOSED' : 'PARTIAL';
+      closeReceiptModal();
+      renderJobWork();
+      showToast(settled ? `${order.id} received and closed.` : `Partial receipt recorded for ${order.id}.`);
+    });
+    $('#globalSearch').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.value.trim()) { setView('items'); $('#itemSearch').value = e.target.value; renderItems(); }
+    });
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#globalSearch').focus(); }
+      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); }
+    });
+    renderItems();
+    renderJobWork();
+  </script>
+</body>
+</html>
