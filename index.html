@@ -190,6 +190,42 @@
     .age-row { display: grid; grid-template-columns: 70px 1fr 58px; align-items: center; gap: 10px; font-size: 10px; }
     .age-track { height: 8px; overflow: hidden; border-radius: 999px; background: #f3f4f6; }
     .age-fill { height: 100%; border-radius: inherit; background: var(--primary); }
+    .sales-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.85fr); gap:16px; align-items:start; }
+    .sales-panel { padding:18px; }
+    .sales-panel h2 { margin-bottom:13px; }
+    .sales-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .sales-fields label, .sales-search-label { display:block; margin-bottom:5px; color:var(--text-soft); font-size:11px; font-weight:650; }
+    .sales-fields input, .sales-fields select, .sales-search { width:100%; height:39px; padding:0 10px; border:1px solid #d4d4d4; border-radius:8px; background:white; color:var(--text); }
+    .sales-search { margin-bottom:10px; }
+    .sales-results { max-height:278px; overflow:auto; border:1px solid var(--border); border-radius:9px; }
+    .sales-product { width:100%; padding:11px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px; border:0; border-bottom:1px solid var(--border); background:white; text-align:left; }
+    .sales-product:last-child { border-bottom:0; }
+    .sales-product:hover { background:var(--primary-soft); }
+    .sales-product:disabled { opacity:.55; cursor:not-allowed; }
+    .sales-product strong, .sales-product small { display:block; }
+    .sales-product small, .sales-help { color:var(--muted); font-size:10px; }
+    .sales-product b { color:var(--primary-hover); white-space:nowrap; }
+    .sales-cart { width:100%; min-width:530px; }
+    .sales-cart th, .sales-cart td { padding:10px; }
+    .sales-cart input { width:76px; height:34px; padding:0 7px; border:1px solid #d4d4d4; border-radius:7px; }
+    .sales-totals { margin-top:14px; padding-top:12px; border-top:1px solid var(--border); }
+    .sales-total-row { display:flex; justify-content:space-between; gap:12px; margin:8px 0; color:var(--text-soft); }
+    .sales-total-row.grand { padding-top:10px; border-top:1px solid var(--border); color:var(--text); font-size:18px; font-weight:750; }
+    .sales-message { min-height:18px; color:var(--primary-hover); font-size:11px; }
+    .sales-history { margin-top:16px; }
+    .inventory-tabs { display:flex; gap:6px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+    .inventory-tab { padding:11px 15px; border:0; border-bottom:2px solid transparent; color:var(--muted); background:transparent; font-weight:650; }
+    .inventory-tab.active { color:var(--primary-hover); border-bottom-color:var(--primary); }
+    .inventory-tab-panel[hidden] { display:none; }
+    .inventory-number { font-variant-numeric:tabular-nums; font-weight:700; }
+    .inventory-negative { color:#b91c1c; }
+    .inventory-positive { color:#047857; }
+    .inventory-detail { margin-top:16px; }
+    .inventory-detail .card-header { flex-wrap:wrap; }
+    .inventory-key { color:var(--primary-hover); font-weight:700; }
+    .inventory-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .inventory-controls select { height:37px; padding:0 10px; border:1px solid var(--border); border-radius:8px; background:white; }
+    .inventory-empty { padding:24px; text-align:center; color:var(--muted); }
 
     .alert-strip { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .alert-card { padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 11px; background: white; }
@@ -261,6 +297,7 @@
       .stats { grid-template-columns: repeat(2, 1fr); }
       .dashboard-grid { grid-template-columns: 1fr; }
       .context-select.location { display: none; }
+      .sales-grid { grid-template-columns:1fr; }
     }
     @media (max-width: 760px) {
       .sidebar { transform: translateX(-100%); width: 260px; box-shadow: 12px 0 40px rgba(15,23,42,.15); }
@@ -331,7 +368,8 @@
         <button class="nav-item demo-link"><svg><use href="#i-cart"/></svg><span class="nav-label">Purchasing</span></button>
         <button class="nav-item demo-link"><svg><use href="#i-factory"/></svg><span class="nav-label">Production</span></button>
         <button class="nav-item" data-view="jobWork"><svg><use href="#i-truck"/></svg><span class="nav-label">Job Work</span><span class="nav-badge">6</span></button>
-        <button class="nav-item demo-link"><svg><use href="#i-boxes"/></svg><span class="nav-label">Inventory</span></button>
+        <button class="nav-item" data-view="sales"><svg><use href="#i-cart"/></svg><span class="nav-label">Sales</span></button>
+        <button class="nav-item" data-view="inventory"><svg><use href="#i-boxes"/></svg><span class="nav-label">Inventory</span></button>
         <button class="nav-item demo-link"><svg><use href="#i-repeat"/></svg><span class="nav-label">Transfers</span><span class="nav-badge">3</span></button>
         <div class="nav-section">Insights</div>
         <button class="nav-item demo-link"><svg><use href="#i-chart"/></svg><span class="nav-label">Analytics</span></button>
@@ -474,6 +512,35 @@
             <article class="card"><div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Job Worker Balance</h2></div><div class="card-note">Outstanding material in external custody</div></div></div><div class="balance-list"><div class="balance-row"><div><strong>Bright Zinc Works</strong><span>5 open orders · Zinc plating</span></div><b>7,280 kg</b></div><div class="balance-row"><div><strong>Sri Sai Electroplaters</strong><span>4 open orders · Zinc / Black oxide</span></div><b>5,940 kg</b></div><div class="balance-row"><div><strong>Metro Coatings</strong><span>3 open orders · Hot dip galvanizing</span></div><b>3,600 kg</b></div><div class="balance-row"><div><strong>Other job workers</strong><span>2 open orders</span></div><b>1,600 kg</b></div></div></article>
             <article class="card"><div class="card-header"><div><div class="card-title"><span class="legend-dot"></span><h2>Outstanding Ageing</h2></div><div class="card-note">Open quantity by dispatch age</div></div></div><div class="age-bars"><div class="age-row"><span>0–7 days</span><div class="age-track"><div class="age-fill" style="width:100%"></div></div><b>8,920 kg</b></div><div class="age-row"><span>8–15 days</span><div class="age-track"><div class="age-fill" style="width:61%"></div></div><b>5,440 kg</b></div><div class="age-row"><span>16–30 days</span><div class="age-track"><div class="age-fill" style="width:34%"></div></div><b>3,060 kg</b></div><div class="age-row"><span>30+ days</span><div class="age-track"><div class="age-fill" style="width:11%"></div></div><b>1,000 kg</b></div></div></article>
           </div>
+          <article class="card table-card" style="margin-top:16px"><div class="card-header"><div><h2>Accepted material awaiting production</h2><div class="card-note">Only inspected, accepted receipts can be issued to sorting or packing.</div></div></div><div class="table-wrap"><table aria-label="Production handoff"><thead><tr><th>Job Work ID</th><th>Processed material</th><th>Accepted</th><th>Issued to production</th><th>Available to issue</th><th>Next operation</th><th></th></tr></thead><tbody id="handoffRows"></tbody></table></div><div class="empty" id="handoffEmpty" hidden>No accepted material awaiting production.</div></article>
+          <article class="card table-card" style="margin-top:16px"><div class="card-header"><div><h2>Downstream production batches</h2><div class="card-note">Each batch links the job-work receipt to finished output and scrap.</div></div></div><div class="table-wrap"><table aria-label="Downstream production batches"><thead><tr><th>Batch</th><th>Job Work ID</th><th>Operation</th><th>Input</th><th>Finished output</th><th>Scrap</th><th>Variance</th><th>Status</th></tr></thead><tbody id="productionRows"></tbody></table></div><div class="empty" id="productionEmpty">No downstream batches in this session.</div></article>
+        </section>
+        <section class="view" id="salesView">
+          <div class="page-header"><div><div class="eyebrow">Trading / Sales</div><h1>Sales</h1><p class="subtitle">Sell available finished goods from job work and purchased stock using the same item code.</p></div><span class="tag pending">Prototype data</span></div>
+          <div class="sales-grid">
+            <div>
+              <article class="card sales-panel"><h2>Customer and dispatch</h2><div class="sales-fields">
+                <div><label for="saleType">Sale type</label><select id="saleType"><option value="CASH">Cash sale</option><option value="ACCOUNT">Customer account</option></select></div>
+                <div><label for="saleLocation">Dispatch location</label><select id="saleLocation"><option>Factory 1</option><option>Factory 2</option></select></div>
+                <div><label for="saleCustomer">Customer name <span id="customerRequired">(optional for cash sale)</span></label><input id="saleCustomer" list="saleCustomers" placeholder="Search or enter customer"><datalist id="saleCustomers"><option value="ABC Industrial Supplies"><option value="Metro Engineering Works"><option value="Shree Hardware Traders"></datalist></div>
+                <div><label for="salePhone">Phone</label><input id="salePhone" type="tel" placeholder="Customer contact"></div>
+              </div></article>
+              <article class="card sales-panel" style="margin-top:16px"><h2>Find products</h2><label class="sales-search-label" for="saleSearch">Barcode, item code, or product name</label><input class="sales-search" id="saleSearch" type="search" autocomplete="off" placeholder="Scan barcode or type a product name"><p class="sales-help">Press Enter for an exact barcode match, or select an item below. Quantities are in KG.</p><div class="sales-results" id="saleResults"></div></article>
+              <article class="card table-card" style="margin-top:16px"><div class="card-header"><h2>Sale items</h2><span class="card-note" id="saleLineCount">0 lines</span></div><div class="table-wrap"><table class="sales-cart" aria-label="Sale items"><thead><tr><th>Product</th><th>Available</th><th>Quantity KG</th><th>Rate ₹/KG</th><th>Amount</th><th></th></tr></thead><tbody id="saleCartRows"></tbody></table></div><div class="empty" id="saleCartEmpty">Search and add a product to begin.</div></article>
+            </div>
+            <article class="card sales-panel"><h2>Payment summary</h2><div class="sales-totals"><div class="sales-total-row"><span>Items subtotal</span><b id="saleSubtotal">₹0.00</b></div><div class="sales-total-row grand"><span>Total</span><b id="saleTotal">₹0.00</b></div></div><div class="sales-fields" style="margin-top:16px"><div><label for="salePayment">Payment method</label><select id="salePayment"><option value="CASH">Cash</option><option value="ACCOUNT">On account</option></select></div><div><label for="cashReceived">Cash received ₹</label><input id="cashReceived" type="number" min="0" step="0.01" value="0"></div></div><div class="sales-totals"><div class="sales-total-row"><span>Change to return</span><b id="cashChange">₹0.00</b></div><div class="sales-total-row"><span>Balance due</span><b id="saleBalance">₹0.00</b></div></div><p class="sales-message" id="saleMessage" role="status"></p><div class="actions"><button class="button" id="clearSale" type="button">Clear</button><button class="button primary" id="saveSale" type="button">Save sale draft</button></div><p class="sales-help">Demo pricing and availability only. APEX will validate stock and post the dispatch through the approved service.</p></article>
+          </div>
+          <article class="card sales-history"><div class="card-header"><h2>Recent sales drafts</h2><span class="card-note">This browser session</span></div><div id="saleHistory" class="empty">No sales drafts saved yet.</div></article>
+        </section>
+        <section class="view" id="inventoryView">
+          <div class="page-header"><div><div class="eyebrow">Operations / Inventory</div><h1>Inventory Control</h1><p class="subtitle">Reconciled KG balances by business, location, item and stock status.</p></div><div class="actions"><button class="button" id="inventoryTransferButton"><svg><use href="#i-repeat"/></svg>Request transfer</button><button class="button primary" id="inventoryAdjustmentButton"><svg><use href="#i-plus"/></svg>Request adjustment</button></div></div>
+          <div class="metric-strip"><article class="metric-card"><div class="metric-icon green"><svg><use href="#i-boxes"/></svg></div><div class="metric-copy"><span>Available internally</span><strong id="inventoryAvailable">0 kg</strong><small>Eligible for issue or sale</small></div></article><article class="metric-card"><div class="metric-icon blue"><svg><use href="#i-truck"/></svg></div><div class="metric-copy"><span>At job workers</span><strong id="inventoryCustody">0 kg</strong><small>Company owned, unavailable</small></div></article><article class="metric-card"><div class="metric-icon amber"><svg><use href="#i-repeat"/></svg></div><div class="metric-copy"><span>In transit</span><strong id="inventoryTransit">0 kg</strong><small>Awaiting destination receipt</small></div></article><article class="metric-card"><div class="metric-icon red"><svg><use href="#i-alert"/></svg></div><div class="metric-copy"><span>Low stock locations</span><strong id="inventoryLow">0</strong><small>Below sample reorder level</small></div></article></div>
+          <div class="toolbar"><div class="field-search"><svg><use href="#i-search"/></svg><input id="inventorySearch" type="search" placeholder="Search item code, name or barcode"></div><select id="inventoryBusiness" aria-label="Inventory business"><option value="">All businesses</option><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select><select id="inventoryLocation" aria-label="Inventory location"><option value="">All locations</option><option>Factory 1</option><option>Factory 2</option><option>Bright Zinc Works</option><option>Inter-company transit</option></select><select id="inventoryStatus" aria-label="Inventory status"><option value="">All statuses</option><option>Available</option><option>Job worker custody</option><option>In transit</option><option>Held</option></select><span class="result-count" id="inventoryCount"></span></div>
+          <div class="inventory-tabs" role="tablist" aria-label="Inventory reports"><button class="inventory-tab active" data-inventory-tab="balances" role="tab" aria-selected="true">Stock by location</button><button class="inventory-tab" data-inventory-tab="ledger" role="tab" aria-selected="false">Item ledger</button><button class="inventory-tab" data-inventory-tab="requests" role="tab" aria-selected="false">Pending requests</button></div>
+          <section class="inventory-tab-panel" id="inventoryBalancesPanel"><article class="card table-card"><div class="table-wrap"><table aria-label="Stock by location"><thead><tr><th>Item</th><th>Business</th><th>Location</th><th>Status</th><th>Opening KG</th><th>Inward KG</th><th>Outward KG</th><th>Closing KG</th><th></th></tr></thead><tbody id="inventoryBalanceRows"></tbody></table></div><div class="inventory-empty" id="inventoryBalanceEmpty" hidden>No stock matches the filters.</div></article></section>
+          <section class="inventory-tab-panel" id="inventoryLedgerPanel" hidden><article class="card table-card"><div class="card-header"><div><h2>Movement ledger</h2><div class="card-note">Posted movements only. A draft request never changes these balances.</div></div><div class="inventory-controls"><label for="ledgerItem">Item</label><select id="ledgerItem"></select></div></div><div class="table-wrap"><table aria-label="Item movement ledger"><thead><tr><th>Date</th><th>Reference</th><th>Movement</th><th>Business / location</th><th>Inward KG</th><th>Outward KG</th><th>Running KG</th></tr></thead><tbody id="inventoryLedgerRows"></tbody></table></div><div class="inventory-empty" id="inventoryLedgerEmpty" hidden>No posted movements match the filters.</div></article></section>
+          <section class="inventory-tab-panel" id="inventoryRequestsPanel" hidden><article class="card table-card"><div class="card-header"><div><h2>Transfer and adjustment requests</h2><div class="card-note">Review and approval are required before posting.</div></div></div><div class="table-wrap"><table aria-label="Inventory requests"><thead><tr><th>Request</th><th>Type</th><th>Item</th><th>From / To</th><th>Quantity KG</th><th>Reason</th><th>Status</th></tr></thead><tbody id="inventoryRequestRows"></tbody></table></div><div class="inventory-empty" id="inventoryRequestEmpty">No requests in this browser session.</div></article></section>
+          <p class="sales-help inventory-detail">Sample posted movements illustrate opening stock, purchase, production, job work custody and inter-company transit. Values are for design review, not live Oracle stock.</p>
         </section>
       </main>
     </section>
@@ -554,11 +621,15 @@
           <div class="form-field"><label for="rejectedQty">Rejected quantity</label><input id="rejectedQty" type="number" min="0" step="0.001" value="0"></div>
           <div class="form-field"><label for="varianceQty">Loss / variance</label><input id="varianceQty" type="number" min="0" step="0.001" value="0"></div>
           <div class="form-field span-2"><label for="varianceReason">Variance reason</label><input id="varianceReason" placeholder="Required before closure when variance exists"></div>
+          <div class="form-field span-2"><label for="receiptProcessedItem">Accepted processed item</label><input id="receiptProcessedItem" readonly></div>
+          <div class="form-field span-2"><label><input id="receiptInspected" type="checkbox" required style="width:auto;height:auto;margin-right:8px">Quantity and quality inspection completed</label></div>
         </div></div>
         <div class="modal-footer"><button type="button" class="button" id="cancelReceiptModal">Cancel</button><button type="submit" class="button primary"><svg><use href="#i-check"/></svg>Save receipt</button></div>
       </form>
     </div>
   </div>
+  <div class="modal-backdrop" id="productionModal" role="dialog" aria-modal="true" aria-labelledby="productionModalHeading"><div class="modal" style="width:min(700px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="productionModalHeading">Issue to Production</h2><p id="productionContext">Link accepted job-work material to a downstream batch.</p></div><button class="icon-button" id="closeProductionModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="productionForm"><div class="form"><div class="form-grid"><div class="form-field"><label for="productionOperation">Next operation</label><select id="productionOperation"><option>Sorting and packing</option><option>Sorting</option><option>Packing</option></select></div><div class="form-field"><label for="productionInputItem">Accepted processed item</label><input id="productionInputItem" readonly></div><div class="form-field"><label class="required" for="productionInput">Input quantity KG</label><input id="productionInput" type="number" min="0.001" step="0.001" required></div><div class="form-field"><label for="productionOutputItem">Finished output item</label><input id="productionOutputItem" readonly></div><div class="form-field"><label class="required" for="productionOutput">Finished output KG</label><input id="productionOutput" type="number" min="0" step="0.001" required></div><div class="form-field"><label for="productionScrap">Packing/sorting scrap KG</label><input id="productionScrap" type="number" min="0" step="0.001" value="0"></div><div class="form-field"><label for="productionVariance">Production variance KG</label><input id="productionVariance" type="number" min="0" step="0.001" value="0"></div><div class="form-field span-2"><label for="productionReason">Variance reason</label><input id="productionReason" placeholder="Required when production variance is above zero"></div></div><p class="sales-message" id="productionError" role="status"></p><p class="sales-help">Input must equal finished output + scrap + approved variance. This prototype records a completed batch in memory.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelProductionModal">Cancel</button><button type="submit" class="button primary">Complete batch</button></div></form></div></div>
+  <div class="modal-backdrop" id="inventoryModal" role="dialog" aria-modal="true" aria-labelledby="inventoryModalTitle"><div class="modal" style="width:min(650px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="inventoryModalTitle">Inventory request</h2><p>Requests remain draft and do not change posted stock.</p></div><button class="icon-button" id="closeInventoryModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="inventoryForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="inventoryRequestItem">Item</label><select id="inventoryRequestItem" required></select></div><div class="form-field"><label class="required" for="inventoryRequestBusiness">Business</label><select id="inventoryRequestBusiness" required><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select></div><div class="form-field"><label class="required" for="inventoryRequestFrom">Source location</label><select id="inventoryRequestFrom" required><option>Factory 1</option><option>Factory 2</option></select></div><div class="form-field" id="inventoryToField"><label class="required" for="inventoryRequestTo">Destination</label><select id="inventoryRequestTo"><option value="">Choose destination</option><option>Factory 1</option><option>Factory 2</option><option>Venkateshwara Industries / Factory 2</option></select></div><div class="form-field" id="inventoryDirectionField" hidden><label for="inventoryRequestDirection">Adjustment</label><select id="inventoryRequestDirection"><option value="DECREASE">Decrease after count</option><option value="INCREASE">Increase after count</option></select></div><div class="form-field"><label class="required" for="inventoryRequestQty">Quantity KG</label><input id="inventoryRequestQty" type="number" min="0.001" step="0.001" required></div><div class="form-field span-2"><label class="required" for="inventoryRequestReason">Reason</label><input id="inventoryRequestReason" required placeholder="Count variance or transfer purpose"></div></div><p class="sales-message" id="inventoryRequestError" role="status"></p></div><div class="modal-footer"><button type="button" class="button" id="cancelInventoryModal">Cancel</button><button type="submit" class="button primary">Save draft request</button></div></form></div></div>
 
   <div class="toast" id="toast" role="status"><svg><use href="#i-check"/></svg><span id="toastText">Done</span></div>
 
@@ -580,6 +651,32 @@
       { id:'JW-2610-024', worker:'Sri Sai Electroplaters', process:'Zinc Plating', item:'Hex Bolt M8 × 35', challan:'DC-2610-116', dispatch:2100, received:0, due:'27 Oct', age:2, status:'DISPATCHED' },
       { id:'JW-2609-087', worker:'Metro Coatings', process:'Hot Dip Galvanizing', item:'Foundation Bolt M20 × 450', challan:'DC-2609-388', dispatch:2800, received:2772, due:'28 Sep', age:25, status:'CLOSED' }
     ];
+    const saleCatalog = [
+      { code:'BLT-M10-050-88', name:'Hex Bolt M10 × 50', barcode:'8901026100118', available:8460.5, rate:118, jobWork:5260.5, purchased:3200 },
+      { code:'NUT-M10-88-ZP', name:'Hex Nut M10', barcode:'8901026100125', available:4238.25, rate:132, jobWork:1838.25, purchased:2400 },
+      { code:'WSR-PLN-M10', name:'Plain Washer M10', barcode:'8901026100316', available:3145.75, rate:154, jobWork:1045.75, purchased:2100 }
+    ];
+    const saleCart = new Map();
+    const saleDrafts = [];
+    const inventoryMovements = [
+      {date:'2026-10-01', ref:'OPEN-DF-01', type:'Opening', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'BLT-M10-050-88', qty:7000},
+      {date:'2026-10-03', ref:'PB-2610-041', type:'Production output', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'BLT-M10-050-88', qty:1800},
+      {date:'2026-10-07', ref:'SAL-2610-033', type:'Sales dispatch', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'BLT-M10-050-88', qty:-500},
+      {date:'2026-10-01', ref:'OPEN-VI-01', type:'Opening', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'BLT-M10-050-88', qty:500},
+      {date:'2026-10-09', ref:'ICT-2610-009', type:'Transfer dispatch', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'BLT-M10-050-88', qty:-200},
+      {date:'2026-10-09', ref:'ICT-2610-009', type:'In transit', business:'Venkateshwara Industries', location:'Inter-company transit', status:'In transit', code:'BLT-M10-050-88', qty:200},
+      {date:'2026-10-01', ref:'OPEN-DF-02', type:'Opening', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'MSW-08-COIL', qty:18000},
+      {date:'2026-10-12', ref:'GRN-2610-018', type:'Purchase receipt', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'MSW-08-COIL', qty:2450},
+      {date:'2026-10-01', ref:'OPEN-DF-03', type:'Opening', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'SFG-BLT-M10', qty:1840},
+      {date:'2026-10-06', ref:'JW-2610-014', type:'Job work dispatch', business:'Dwarka Fasteners', location:'Factory 1', status:'Available', code:'SFG-BLT-M10', qty:-1000},
+      {date:'2026-10-06', ref:'JW-2610-014', type:'External custody', business:'Dwarka Fasteners', location:'Bright Zinc Works', status:'Job worker custody', code:'SFG-BLT-M10', qty:1000},
+      {date:'2026-10-01', ref:'OPEN-VI-02', type:'Opening', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'WSR-PLN-M10', qty:2300},
+      {date:'2026-10-14', ref:'GRN-2610-022', type:'Purchase receipt', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'WSR-PLN-M10', qty:600},
+      {date:'2026-10-16', ref:'HOLD-2610-002', type:'Quality hold', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'WSR-PLN-M10', qty:-40},
+      {date:'2026-10-16', ref:'HOLD-2610-002', type:'Quality hold', business:'Venkateshwara Industries', location:'Factory 2', status:'Held', code:'WSR-PLN-M10', qty:40}
+    ];
+    const inventoryRequests = [];
+    const productionBatches = [];
 
     const $ = (selector, root=document) => root.querySelector(selector);
     const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
@@ -592,6 +689,13 @@
     let editingCode = null;
     let activeValue = true;
     let receivingJobId = null;
+    let producingJobId = null;
+    let inventoryRequestType = 'TRANSFER';
+    jobWorkOrders.forEach(order => { order.issuedToProduction = 0; order.rejected = 0; order.loss = order.status === 'CLOSED' ? order.dispatch - order.received : 0; });
+    const jobOutstanding = order => Math.max(0, Math.round((order.dispatch - order.received - order.rejected - order.loss) * 1000) / 1000);
+    const acceptedAvailable = order => Math.max(0, Math.round((order.received - order.issuedToProduction) * 1000) / 1000);
+    function processedItem(order) { return order.item.startsWith('Unplated ') ? order.item.replace('Unplated ', `${order.process === 'Zinc Plating' ? 'Zinc Plated ' : 'Processed '}`) : `${order.item} · ${order.process}`; }
+    function finishedItem(order) { return order.item.startsWith('Unplated Bolt M10') ? 'Hex Bolt M10 × 50' : order.item; }
 
     function showToast(message) {
       $('#toastText').textContent = message;
@@ -607,6 +711,8 @@
       if (window.innerWidth <= 760) $('#sidebar').classList.remove('mobile-open');
       if (view === 'items') renderItems();
       if (view === 'jobWork') renderJobWork();
+      if (view === 'sales') { renderSaleProducts(); renderSaleCart(); }
+      if (view === 'inventory') renderInventory();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -650,7 +756,7 @@
         CLOSED: ['Closed', 'closed']
       };
       $('#jobWorkRows').innerHTML = filtered.map(order => {
-        const outstanding = Math.max(order.dispatch - order.received, 0);
+        const outstanding = jobOutstanding(order);
         const progress = Math.min(Math.round((order.received / order.dispatch) * 100), 100);
         const [statusLabel, statusClass] = statusMeta[order.status];
         const canReceive = order.status !== 'CLOSED';
@@ -667,6 +773,102 @@
       $('#jobShownCount').textContent = filtered.length;
       $('#jobTotalCount').textContent = jobWorkOrders.length;
       $('#jobResultCount').textContent = `${filtered.length} order${filtered.length === 1 ? '' : 's'}`;
+      renderProductionHandoff();
+    }
+    function renderProductionHandoff() {
+      const eligible = jobWorkOrders.filter(order => acceptedAvailable(order) > 0);
+      $('#handoffRows').innerHTML = eligible.map(order => `<tr><td class="job-code">${order.id}</td><td>${safe(processedItem(order))}</td><td>${order.received.toLocaleString('en-IN')} kg</td><td>${order.issuedToProduction.toLocaleString('en-IN')} kg</td><td class="qty">${acceptedAvailable(order).toLocaleString('en-IN')} kg</td><td>Sorting / packing</td><td><button type="button" class="button" data-production-job="${order.id}">Issue to production</button></td></tr>`).join('');
+      $('#handoffEmpty').hidden = eligible.length > 0;
+      $('#productionRows').innerHTML = productionBatches.map(batch => `<tr><td class="job-code">${batch.id}</td><td>${batch.jobId}</td><td>${safe(batch.operation)}</td><td>${batch.input.toLocaleString('en-IN')} kg</td><td>${batch.output.toLocaleString('en-IN')} kg</td><td>${batch.scrap.toLocaleString('en-IN')} kg</td><td>${batch.variance.toLocaleString('en-IN')} kg</td><td><span class="tag ok">Completed</span></td></tr>`).join('');
+      $('#productionEmpty').hidden = productionBatches.length > 0;
+    }
+    const inventoryItem = code => items.find(item => item.code === code);
+    const kg = value => `${Number(value).toLocaleString('en-IN',{minimumFractionDigits:3,maximumFractionDigits:3})} kg`;
+    function inventoryBalances() {
+      const groups = new Map();
+      for (const movement of inventoryMovements) {
+        const key = [movement.business,movement.location,movement.status,movement.code].join('|');
+        if (!groups.has(key)) groups.set(key,{...movement,opening:0,inward:0,outward:0,closing:0});
+        const row = groups.get(key);
+        if (movement.type === 'Opening') row.opening += movement.qty;
+        else if (movement.qty >= 0) row.inward += movement.qty;
+        else row.outward += -movement.qty;
+        row.closing += movement.qty;
+      }
+      return [...groups.values()].filter(row => row.closing > 0.0001);
+    }
+    function renderInventory() {
+      const balances = inventoryBalances();
+      const sum = status => balances.filter(row => row.status === status).reduce((total,row) => total + row.closing,0);
+      $('#inventoryAvailable').textContent = kg(sum('Available'));
+      $('#inventoryCustody').textContent = kg(sum('Job worker custody'));
+      $('#inventoryTransit').textContent = kg(sum('In transit'));
+      $('#inventoryLow').textContent = balances.filter(row => row.status === 'Available' && row.closing < 1000).length;
+      const search = $('#inventorySearch').value.trim().toLowerCase();
+      const filtered = balances.filter(row => {
+        const item = inventoryItem(row.code);
+        return (!search || `${row.code} ${item?.name || ''} ${item?.barcode || ''}`.toLowerCase().includes(search)) && (!$('#inventoryBusiness').value || row.business === $('#inventoryBusiness').value) && (!$('#inventoryLocation').value || row.location === $('#inventoryLocation').value) && (!$('#inventoryStatus').value || row.status === $('#inventoryStatus').value);
+      });
+      $('#inventoryBalanceRows').innerHTML = filtered.map(row => `<tr><td><strong>${safe(inventoryItem(row.code)?.name || row.code)}</strong><br><span class="card-note">${row.code}</span></td><td>${row.business}</td><td>${row.location}</td><td><span class="tag ${row.status === 'Available' ? 'ok' : row.status === 'Held' ? 'overdue' : 'dispatched'}">${row.status}</span></td><td>${kg(row.opening)}</td><td class="inventory-positive">${kg(row.inward)}</td><td class="inventory-negative">${kg(row.outward)}</td><td class="inventory-number">${kg(row.closing)}</td><td><button type="button" class="button" data-ledger-code="${row.code}">Ledger</button></td></tr>`).join('');
+      $('#inventoryCount').textContent = `${filtered.length} balance${filtered.length === 1 ? '' : 's'}`;
+      $('#inventoryBalanceEmpty').hidden = filtered.length > 0;
+      renderInventoryLedger(); renderInventoryRequests();
+    }
+    function renderInventoryLedger() {
+      const code = $('#ledgerItem').value, business = $('#inventoryBusiness').value, location = $('#inventoryLocation').value, status = $('#inventoryStatus').value;
+      const list = inventoryMovements.filter(row => (!code || row.code === code) && (!business || row.business === business) && (!location || row.location === location) && (!status || row.status === status));
+      const running = new Map();
+      $('#inventoryLedgerRows').innerHTML = list.map(row => {
+        const key = [row.business,row.location,row.status,row.code].join('|');
+        running.set(key,(running.get(key) || 0) + row.qty);
+        return `<tr><td>${row.date}</td><td class="inventory-key">${row.ref}</td><td>${row.type}<br><span class="card-note">${row.status}</span></td><td>${row.business}<br><span class="card-note">${row.location}</span></td><td class="inventory-positive">${row.qty > 0 ? kg(row.qty) : '—'}</td><td class="inventory-negative">${row.qty < 0 ? kg(-row.qty) : '—'}</td><td class="inventory-number">${kg(running.get(key))}</td></tr>`;
+      }).join('');
+      $('#inventoryLedgerEmpty').hidden = list.length > 0;
+    }
+    function renderInventoryRequests() {
+      $('#inventoryRequestRows').innerHTML = inventoryRequests.map(row => `<tr><td class="inventory-key">${row.id}</td><td>${row.type}</td><td>${row.code}</td><td>${row.business} / ${row.from}${row.to ? ' → ' + row.to : ''}</td><td>${kg(row.qty)}</td><td>${safe(row.reason)}</td><td><span class="tag pending">Draft</span></td></tr>`).join('');
+      $('#inventoryRequestEmpty').hidden = inventoryRequests.length > 0;
+    }
+    function showInventoryTab(name) {
+      $$('.inventory-tab').forEach(tab => { const active = tab.dataset.inventoryTab === name; tab.classList.toggle('active',active); tab.setAttribute('aria-selected',String(active)); });
+      ['balances','ledger','requests'].forEach(tab => $(`#inventory${tab[0].toUpperCase()+tab.slice(1)}Panel`).hidden = tab !== name);
+    }
+    function closeProductionModal() { $('#productionModal').classList.remove('open'); producingJobId = null; }
+    function openProductionModal(order) {
+      producingJobId = order.id;
+      $('#productionForm').reset();
+      $('#productionContext').textContent = `${order.id} · ${order.worker} · ${acceptedAvailable(order).toLocaleString('en-IN')} kg accepted and available`;
+      $('#productionInputItem').value = processedItem(order);
+      $('#productionOutputItem').value = finishedItem(order);
+      $('#productionInput').max = acceptedAvailable(order);
+      $('#productionInput').value = acceptedAvailable(order);
+      $('#productionOutput').value = acceptedAvailable(order);
+      $('#productionError').textContent = '';
+      $('#productionModal').classList.add('open');
+      setTimeout(() => $('#productionInput').focus(), 30);
+    }
+    const money = value => `₹${Number(value).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+    const safe = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+    function renderSaleProducts() {
+      const query = $('#saleSearch').value.trim().toLowerCase();
+      const matches = saleCatalog.filter(product => !query || `${product.barcode} ${product.code} ${product.name}`.toLowerCase().includes(query));
+      $('#saleResults').innerHTML = matches.length ? matches.map(product => `<button class="sales-product" data-sale-code="${product.code}" type="button" ${product.available <= 0 ? 'disabled' : ''}><span><strong>${safe(product.name)}</strong><small>${product.code} · ${product.barcode}<br>Available ${product.available.toLocaleString('en-IN')} kg · Job work ${product.jobWork.toLocaleString('en-IN')} · Purchased ${product.purchased.toLocaleString('en-IN')}</small></span><b>${money(product.rate)}/kg</b></button>`).join('') : '<div class="empty">No matching products.</div>';
+    }
+    function renderSaleCart() {
+      let total = 0;
+      $('#saleCartRows').innerHTML = [...saleCart.values()].map(line => {
+        const amount = Math.round(line.quantity * line.rate * 100) / 100;
+        total += amount;
+        return `<tr><td><strong>${safe(line.name)}</strong><br><span class="card-note">${line.code}</span></td><td>${line.available.toLocaleString('en-IN')} kg</td><td><input aria-label="Quantity for ${safe(line.name)}" data-sale-quantity="${line.code}" type="number" min="0.001" max="${line.available}" step="0.001" value="${line.quantity}"></td><td><input aria-label="Rate for ${safe(line.name)}" data-sale-rate="${line.code}" type="number" min="0" step="0.01" value="${line.rate}"></td><td><strong>${money(amount)}</strong></td><td><button class="icon-button" type="button" data-sale-remove="${line.code}" aria-label="Remove ${safe(line.name)}"><svg><use href="#i-close"/></svg></button></td></tr>`;
+      }).join('');
+      $('#saleCartEmpty').hidden = saleCart.size > 0;
+      $('#saleLineCount').textContent = `${saleCart.size} line${saleCart.size === 1 ? '' : 's'}`;
+      $('#saleSubtotal').textContent = money(total);
+      $('#saleTotal').textContent = money(total);
+      const cash = $('#salePayment').value === 'CASH' ? Number($('#cashReceived').value || 0) : 0;
+      $('#cashChange').textContent = money(Math.max(cash - total, 0));
+      $('#saleBalance').textContent = money($('#salePayment').value === 'CASH' ? Math.max(total - cash, 0) : total);
+      $('#cashReceived').disabled = $('#salePayment').value !== 'CASH';
     }
 
     function openItemModal(item=null, readOnly=false) {
@@ -695,12 +897,14 @@
     function closeReceiptModal() { $('#receiptModal').classList.remove('open'); receivingJobId = null; }
     function openReceiptModal(order) {
       receivingJobId = order.id;
-      const outstanding = Math.max(order.dispatch - order.received, 0);
+      const outstanding = jobOutstanding(order);
       $('#receiptContext').textContent = `${order.id} · ${order.worker} · Outstanding ${outstanding.toLocaleString('en-IN')} kg`;
       $('#receiptQty').value = outstanding;
       $('#rejectedQty').value = 0;
       $('#varianceQty').value = 0;
       $('#varianceReason').value = '';
+      $('#receiptProcessedItem').value = processedItem(order);
+      $('#receiptInspected').checked = false;
       $('#receiptModal').classList.add('open');
       setTimeout(() => $('#receiptQty').focus(), 30);
     }
@@ -718,6 +922,93 @@
     $('#scanButton').addEventListener('click', () => showToast('Barcode scanner entry point ready for APEX integration.'));
     $('#exportButton').addEventListener('click', () => showToast('Item export prepared. APEX will generate the final file.'));
     $('#jobWorkExport').addEventListener('click', () => showToast('Job-worker balance export prepared.'));
+    const inventoryOptions = items.filter(item => item.status === 'ACTIVE').map(item => `<option value="${item.code}">${safe(item.name)} · ${item.code}</option>`).join('');
+    $('#inventoryRequestItem').innerHTML = inventoryOptions;
+    $('#ledgerItem').innerHTML = '<option value="">All items</option>' + inventoryOptions;
+    ['inventorySearch','inventoryBusiness','inventoryLocation','inventoryStatus'].forEach(id => $(`#${id}`).addEventListener('input',renderInventory));
+    $('#ledgerItem').addEventListener('change',renderInventoryLedger);
+    $$('.inventory-tab').forEach(tab => tab.addEventListener('click',() => showInventoryTab(tab.dataset.inventoryTab)));
+    $('#inventoryBalanceRows').addEventListener('click',event => { const button = event.target.closest('[data-ledger-code]'); if (!button) return; $('#ledgerItem').value = button.dataset.ledgerCode; showInventoryTab('ledger'); renderInventoryLedger(); });
+    function openInventoryRequest(type) {
+      inventoryRequestType = type; $('#inventoryForm').reset(); $('#inventoryRequestError').textContent = '';
+      $('#inventoryModalTitle').textContent = type === 'TRANSFER' ? 'Request Stock Transfer' : 'Request Stock Adjustment';
+      $('#inventoryToField').hidden = type !== 'TRANSFER'; $('#inventoryDirectionField').hidden = type !== 'ADJUSTMENT';
+      $('#inventoryRequestTo').required = type === 'TRANSFER';
+      $('#inventoryModal').classList.add('open'); setTimeout(() => $('#inventoryRequestItem').focus(),30);
+    }
+    function closeInventoryRequest() { $('#inventoryModal').classList.remove('open'); }
+    $('#inventoryTransferButton').addEventListener('click',() => openInventoryRequest('TRANSFER'));
+    $('#inventoryAdjustmentButton').addEventListener('click',() => openInventoryRequest('ADJUSTMENT'));
+    $('#closeInventoryModal').addEventListener('click',closeInventoryRequest);
+    $('#cancelInventoryModal').addEventListener('click',closeInventoryRequest);
+    $('#inventoryModal').addEventListener('click',event => { if (event.target === $('#inventoryModal')) closeInventoryRequest(); });
+    $('#inventoryForm').addEventListener('submit',event => {
+      event.preventDefault();
+      const code = $('#inventoryRequestItem').value, business = $('#inventoryRequestBusiness').value, from = $('#inventoryRequestFrom').value;
+      const to = inventoryRequestType === 'TRANSFER' ? $('#inventoryRequestTo').value : '';
+      const qty = Number($('#inventoryRequestQty').value), direction = $('#inventoryRequestDirection').value;
+      const error = $('#inventoryRequestError');
+      const available = inventoryBalances().filter(row => row.code === code && row.business === business && row.location === from && row.status === 'Available').reduce((sum,row) => sum + row.closing,0);
+      if (!Number.isFinite(qty) || qty <= 0) { error.textContent = 'Enter a positive quantity.'; return; }
+      if (inventoryRequestType === 'TRANSFER' && (to === from || !to)) { error.textContent = 'Choose a different destination.'; return; }
+      if ((inventoryRequestType === 'TRANSFER' || direction === 'DECREASE') && qty > available) { error.textContent = `Only ${kg(available)} is available at this business and location.`; return; }
+      const id = `INV-REQ-${String(inventoryRequests.length + 1).padStart(3,'0')}`;
+      inventoryRequests.unshift({id,type:inventoryRequestType === 'TRANSFER' ? 'Transfer' : `Adjustment · ${direction.toLowerCase()}`,code,business,from,to,qty,reason:$('#inventoryRequestReason').value.trim()});
+      closeInventoryRequest(); renderInventory(); showInventoryTab('requests'); showToast(`${id} saved for review. Posted stock is unchanged.`);
+    });
+    $('#saleSearch').addEventListener('input', renderSaleProducts);
+    $('#saleSearch').addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const product = saleCatalog.find(row => row.barcode === event.target.value.trim());
+      if (product) addSaleProduct(product); else $('#saleMessage').textContent = 'Select a matching product from the list.';
+    });
+    function addSaleProduct(product) {
+      const line = saleCart.get(product.code);
+      if (line && line.quantity + 1 > product.available) { $('#saleMessage').textContent = 'Quantity exceeds available stock.'; return; }
+      saleCart.set(product.code, line ? {...line, quantity:line.quantity + 1} : {...product, quantity:1});
+      $('#saleMessage').textContent = '';
+      $('#saleSearch').value = '';
+      renderSaleProducts(); renderSaleCart(); $('#saleSearch').focus();
+    }
+    $('#saleResults').addEventListener('click', event => {
+      const button = event.target.closest('[data-sale-code]');
+      if (button) addSaleProduct(saleCatalog.find(row => row.code === button.dataset.saleCode));
+    });
+    $('#saleCartRows').addEventListener('change', event => {
+      const input = event.target;
+      const code = input.dataset.saleQuantity || input.dataset.saleRate;
+      if (!code) return;
+      const line = saleCart.get(code);
+      const value = Number(input.value);
+      if (input.dataset.saleQuantity) {
+        if (!Number.isFinite(value) || value <= 0 || value > line.available) { $('#saleMessage').textContent = `Enter a quantity between 0 and ${line.available} kg.`; input.value = line.quantity; return; }
+        line.quantity = value;
+      } else {
+        if (!Number.isFinite(value) || value < 0) { $('#saleMessage').textContent = 'Enter a valid rate.'; input.value = line.rate; return; }
+        line.rate = value;
+      }
+      $('#saleMessage').textContent = ''; renderSaleCart();
+    });
+    $('#saleCartRows').addEventListener('click', event => {
+      const button = event.target.closest('[data-sale-remove]');
+      if (button) { saleCart.delete(button.dataset.saleRemove); renderSaleCart(); }
+    });
+    $('#salePayment').addEventListener('change', renderSaleCart);
+    $('#cashReceived').addEventListener('input', renderSaleCart);
+    $('#saleType').addEventListener('change', () => { $('#customerRequired').textContent = $('#saleType').value === 'CASH' ? '(optional for cash sale)' : '(required)'; $('#salePayment').value = $('#saleType').value; renderSaleCart(); });
+    $('#clearSale').addEventListener('click', () => { saleCart.clear(); ['saleCustomer','salePhone','saleSearch'].forEach(id => $(`#${id}`).value = ''); $('#cashReceived').value = '0'; $('#saleMessage').textContent = ''; renderSaleProducts(); renderSaleCart(); });
+    $('#saveSale').addEventListener('click', () => {
+      if (!saleCart.size) { $('#saleMessage').textContent = 'Add at least one product.'; return; }
+      if (($('#saleType').value === 'ACCOUNT' || $('#salePayment').value === 'ACCOUNT') && !$('#saleCustomer').value.trim()) { $('#saleMessage').textContent = 'Enter a customer for an account sale.'; $('#saleCustomer').focus(); return; }
+      const total = [...saleCart.values()].reduce((sum,line) => sum + line.quantity * line.rate, 0);
+      if ($('#salePayment').value === 'CASH' && Number($('#cashReceived').value || 0) < total) { $('#saleMessage').textContent = 'Cash received is less than the sale total.'; $('#cashReceived').focus(); return; }
+      const id = `SAL-DRAFT-${String(saleDrafts.length + 1).padStart(3,'0')}`;
+      saleDrafts.unshift({id, customer:$('#saleCustomer').value.trim() || 'Walk-in customer', total, lines:saleCart.size, type:$('#saleType').value});
+      $('#saleHistory').classList.remove('empty');
+      $('#saleHistory').innerHTML = saleDrafts.map(draft => `<div class="balance-row" style="padding:12px 18px"><div><strong>${draft.id} · ${safe(draft.customer)}</strong><span>${draft.lines} lines · ${draft.type === 'CASH' ? 'Cash sale' : 'Customer account'} · Draft</span></div><b>${money(draft.total)}</b></div>`).join('');
+      saleCart.clear(); $('#cashReceived').value = '0'; $('#saleMessage').textContent = `${id} saved as a prototype draft.`; renderSaleCart();
+    });
     $('#newJobWork').addEventListener('click', () => { $('#jobWorkForm').reset(); $('#jwDate').value='2026-10-18'; $('#jwDue').value='2026-10-25'; $('#jobWorkModal').classList.add('open'); setTimeout(() => $('#jwWorker').focus(), 30); });
     $('#closeModal').addEventListener('click', closeItemModal);
     $('#cancelModal').addEventListener('click', closeItemModal);
@@ -742,7 +1033,27 @@
       if (!button) return;
       const order = jobWorkOrders.find(row => row.id === button.dataset.id);
       if (button.dataset.jwAction === 'receipt') openReceiptModal(order);
-      else showToast(`${order.id}: ${order.dispatch.toLocaleString('en-IN')} kg dispatched, ${(order.dispatch - order.received).toLocaleString('en-IN')} kg outstanding.`);
+      else showToast(`${order.id}: ${order.dispatch.toLocaleString('en-IN')} kg dispatched, ${jobOutstanding(order).toLocaleString('en-IN')} kg outstanding.`);
+    });
+    $('#handoffRows').addEventListener('click', event => { const button = event.target.closest('[data-production-job]'); if (button) openProductionModal(jobWorkOrders.find(order => order.id === button.dataset.productionJob)); });
+    $('#closeProductionModal').addEventListener('click', closeProductionModal);
+    $('#cancelProductionModal').addEventListener('click', closeProductionModal);
+    $('#productionModal').addEventListener('click', event => { if (event.target === $('#productionModal')) closeProductionModal(); });
+    $('#productionForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const order = jobWorkOrders.find(row => row.id === producingJobId);
+      const input = Number($('#productionInput').value), output = Number($('#productionOutput').value), scrap = Number($('#productionScrap').value || 0), variance = Number($('#productionVariance').value || 0);
+      const error = $('#productionError');
+      if (![input,output,scrap,variance].every(Number.isFinite) || input <= 0 || output < 0 || scrap < 0 || variance < 0 || input > acceptedAvailable(order)) { error.textContent = 'Enter non-negative quantities within the accepted available stock.'; return; }
+      if (Math.abs(input - output - scrap - variance) > 0.001) { error.textContent = 'Input must equal finished output + scrap + variance.'; return; }
+      if (variance > 0 && !$('#productionReason').value.trim()) { error.textContent = 'A reason is required for production variance.'; return; }
+      const id = `PB-JW-${String(productionBatches.length + 1).padStart(3,'0')}`;
+      order.issuedToProduction = Math.round((order.issuedToProduction + input) * 1000) / 1000;
+      productionBatches.unshift({id, jobId:order.id, operation:$('#productionOperation').value, input, output, scrap, variance});
+      const product = saleCatalog.find(row => row.name === finishedItem(order));
+      if (product) { product.available += output; product.jobWork += output; }
+      closeProductionModal(); renderJobWork(); renderSaleProducts();
+      showToast(`${id} completed; ${output.toLocaleString('en-IN')} kg finished output recorded.`);
     });
     $('#itemForm').addEventListener('submit', e => {
       e.preventDefault();
@@ -772,11 +1083,14 @@
       const accepted = Number($('#receiptQty').value || 0);
       const rejected = Number($('#rejectedQty').value || 0);
       const variance = Number($('#varianceQty').value || 0);
-      const remaining = order.dispatch - order.received;
+      const remaining = jobOutstanding(order);
+      if (accepted + rejected + variance <= 0) { showToast('Enter a receipt, rejection, or variance quantity.'); return; }
       if (accepted + rejected + variance > remaining) { showToast('Receipt and variance exceed the outstanding quantity.'); return; }
       if (variance > 0 && !$('#varianceReason').value.trim()) { showToast('Enter a reason before recording variance.'); return; }
       order.received += accepted;
-      const settled = order.received + rejected + variance >= order.dispatch;
+      order.rejected += rejected;
+      order.loss += variance;
+      const settled = jobOutstanding(order) <= 0.001;
       order.status = settled ? 'CLOSED' : 'PARTIAL';
       closeReceiptModal();
       renderJobWork();
@@ -787,10 +1101,13 @@
     });
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#globalSearch').focus(); }
-      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); }
+      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); closeProductionModal(); closeInventoryRequest(); }
     });
     renderItems();
     renderJobWork();
+    renderSaleProducts();
+    renderSaleCart();
+    renderInventory();
   </script>
 </body>
 </html>
