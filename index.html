@@ -226,6 +226,13 @@
     .inventory-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
     .inventory-controls select { height:37px; padding:0 10px; border:1px solid var(--border); border-radius:8px; background:white; }
     .inventory-empty { padding:24px; text-align:center; color:var(--muted); }
+    .location-summary { margin-top:16px; }
+    .location-summary .card-header { flex-wrap:wrap; }
+    .location-summary-meta { padding:0 18px 14px; display:flex; gap:16px; flex-wrap:wrap; color:var(--muted); font-size:11px; }
+    .location-summary-meta strong { color:var(--text); }
+    .location-table-link { padding:0; border:0; color:var(--primary-hover); background:transparent; font-weight:750; text-align:left; }
+    .location-table-link:hover { text-decoration:underline; }
+    #locationRows tr.selected { background:var(--primary-soft); }
 
     .alert-strip { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .alert-card { padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 11px; background: white; }
@@ -376,8 +383,10 @@
         <button class="nav-item active" data-view="dashboard"><svg><use href="#i-dashboard"/></svg><span class="nav-label">Dashboard</span></button>
         <div class="nav-section">Masters</div>
         <button class="nav-item" data-view="items"><svg><use href="#i-package"/></svg><span class="nav-label">Items</span></button>
+        <!-- Business Partners navigation will be enabled when its module is ready.
         <button class="nav-item demo-link"><svg><use href="#i-users"/></svg><span class="nav-label">Business Partners</span></button>
-        <button class="nav-item demo-link"><svg><use href="#i-building"/></svg><span class="nav-label">Locations</span></button>
+        -->
+        <button class="nav-item" data-view="locations"><svg><use href="#i-building"/></svg><span class="nav-label">Locations</span></button>
         <div class="nav-section">Operations</div>
         <button class="nav-item" data-view="purchasing"><svg><use href="#i-cart"/></svg><span class="nav-label">Purchasing</span></button>
         <!-- Production navigation will be enabled when its module is ready.
@@ -492,6 +501,15 @@
           </article>
         </section>
 
+        <section class="view" id="locationsView">
+          <div class="page-header"><div><div class="eyebrow">Masters / Locations</div><h1>Location Master</h1><p class="subtitle">Maintain stock-holding places by business and distinguish internal stock, external custody and in-transit stock.</p></div><div class="actions"><button class="button primary" id="addLocation"><svg><use href="#i-plus"/></svg>Add location</button></div></div>
+          <div class="metric-strip"><article class="metric-card"><div class="metric-icon red"><svg><use href="#i-building"/></svg></div><div class="metric-copy"><span>Active locations</span><strong id="locationActiveCount">0</strong><small>Across both businesses</small></div></article><article class="metric-card"><div class="metric-icon green"><svg><use href="#i-boxes"/></svg></div><div class="metric-copy"><span>Internal locations</span><strong id="locationInternalCount">0</strong><small>Factories and warehouses</small></div></article><article class="metric-card"><div class="metric-icon blue"><svg><use href="#i-truck"/></svg></div><div class="metric-copy"><span>External custody</span><strong id="locationExternalCount">0</strong><small>Company-owned job-worker stock</small></div></article><article class="metric-card"><div class="metric-icon amber"><svg><use href="#i-repeat"/></svg></div><div class="metric-copy"><span>Transit locations</span><strong id="locationTransitCount">0</strong><small>Awaiting matched receipt</small></div></article></div>
+          <div class="toolbar"><div class="field-search"><svg><use href="#i-search"/></svg><input id="locationSearch" type="search" placeholder="Search location code, name, custodian or address..." aria-label="Search locations"></div><select id="locationBusinessFilter" aria-label="Location business"><option value="">All businesses</option><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select><select id="locationTypeFilter" aria-label="Location type"><option value="">All types</option><option value="FACTORY">Factory</option><option value="WAREHOUSE">Warehouse</option><option value="JOB_WORKER">Job-worker custody</option><option value="TRANSIT">In transit</option></select><select id="locationStatusFilter" aria-label="Location status"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select><span class="result-count" id="locationResultCount"></span></div>
+          <article class="card table-card"><div class="table-wrap"><table aria-label="Location master list"><thead><tr><th>Location</th><th>Business</th><th>Type</th><th>Custodian / address</th><th>Current stock</th><th>Items in stock</th><th>Status</th><th></th></tr></thead><tbody id="locationRows"></tbody></table></div><div class="empty" id="locationEmpty" hidden>No locations match these filters.</div></article>
+          <article class="card table-card location-summary" id="locationDetailCard"><div class="card-header"><div><h2 id="locationDetailTitle">Location stock</h2><div class="card-note">Current balances come from the prototype's posted movement ledger.</div></div><button type="button" class="button" id="locationOpenInventory">Open in Inventory</button></div><div class="location-summary-meta" id="locationDetailMeta"></div><div class="table-wrap"><table aria-label="Stock at selected location"><thead><tr><th>Item</th><th>Stock status</th><th>Quantity KG</th></tr></thead><tbody id="locationStockRows"></tbody></table></div><div class="inventory-empty" id="locationStockEmpty" hidden>No posted stock at this location.</div></article>
+          <p class="sales-help inventory-detail">Sample locations and balances are for design review. Saving a location changes this browser session only; stock quantities remain derived from posted movements.</p>
+        </section>
+
         <section class="view" id="purchasingView">
           <div class="page-header"><div><div class="eyebrow">Operations / Purchasing</div><h1>Purchasing</h1><p class="subtitle">Create purchase orders, receive in parts, capture incidental charges, and review landed cost before stock posting.</p></div><div class="actions"><button class="button primary" id="newPurchaseOrder"><svg><use href="#i-plus"/></svg>New purchase order</button></div></div>
           <div class="metric-strip"><article class="metric-card"><div class="metric-icon blue"><svg><use href="#i-file"/></svg></div><div class="metric-copy"><span>Open purchase orders</span><strong id="purchaseOpenCount">0</strong><small>With quantity outstanding</small></div></article><article class="metric-card"><div class="metric-icon amber"><svg><use href="#i-truck"/></svg></div><div class="metric-copy"><span>Awaiting receipt</span><strong id="purchaseOpenQty">0 kg</strong><small>Across open orders</small></div></article><article class="metric-card"><div class="metric-icon red"><svg><use href="#i-clock"/></svg></div><div class="metric-copy"><span>Receipts for approval</span><strong id="purchaseApprovalCount">0</strong><small>No stock change until posting</small></div></article><article class="metric-card"><div class="metric-icon green"><svg><use href="#i-boxes"/></svg></div><div class="metric-copy"><span>Posted receipts</span><strong id="purchasePostedQty">0 kg</strong><small>Purchase stock added to ledger</small></div></article></div>
@@ -571,6 +589,7 @@
     </section>
   </div>
 
+  <div class="modal-backdrop" id="locationModal" role="dialog" aria-modal="true" aria-labelledby="locationModalTitle"><div class="modal" style="width:min(690px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="locationModalTitle">Add location</h2><p>One location code belongs to one business.</p></div><button class="icon-button" id="closeLocationModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="locationForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="locationCode">Location code</label><input id="locationCode" maxlength="24" required placeholder="e.g. DF-WH-01"></div><div class="form-field"><label class="required" for="locationName">Location name</label><input id="locationName" maxlength="80" required placeholder="e.g. Central Warehouse"></div><div class="form-field"><label class="required" for="locationBusiness">Business</label><select id="locationBusiness" required><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select></div><div class="form-field"><label class="required" for="locationType">Location type</label><select id="locationType" required><option value="FACTORY">Factory</option><option value="WAREHOUSE">Warehouse</option><option value="JOB_WORKER">Job-worker custody</option><option value="TRANSIT">In transit</option></select></div><div class="form-field" id="locationCustodianField" hidden><label class="required" for="locationCustodian">Job worker / custodian</label><input id="locationCustodian" maxlength="80" placeholder="External custodian"></div><div class="form-field"><label for="locationStatus">Status</label><select id="locationStatus"><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></div><div class="form-field span-2"><label for="locationAddress">Address / notes</label><input id="locationAddress" maxlength="160" placeholder="Optional location description"></div></div><p class="sales-message" id="locationError" role="status"></p><p class="sales-help" id="locationFormHelp">Locations with posted stock or open purchase orders cannot be deactivated in this prototype.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelLocationModal">Cancel</button><button type="submit" class="button primary">Save location</button></div></form></div></div>
   <div class="modal-backdrop" id="purchaseOrderModal" role="dialog" aria-modal="true" aria-labelledby="purchaseOrderModalTitle"><div class="modal" style="width:min(900px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="purchaseOrderModalTitle">New purchase order</h2><p>Add all products to one order for the selected vendor and destination.</p></div><button class="icon-button" id="closePurchaseOrder" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="purchaseOrderForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="poVendor">Vendor</label><input id="poVendor" list="purchaseVendors" required placeholder="Search or enter vendor"><datalist id="purchaseVendors"><option value="Shree Steel Traders"><option value="National Fastener Supply"><option value="Allied Metals"></datalist></div><div class="form-field"><label class="required" for="poBusiness">Buying business</label><select id="poBusiness" required><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select></div><div class="form-field"><label class="required" for="poLocation">Receipt destination</label><select id="poLocation" required><option>Factory 1</option><option>Factory 2</option></select></div><div class="form-field"><label class="required" for="poExpected">Expected delivery</label><input id="poExpected" type="date" required></div><div class="form-field"><label for="poTransporter">Expected transporter</label><input id="poTransporter" placeholder="Optional at PO stage"></div></div><div class="purchase-form-section"><div><h3>Purchase order items</h3><button type="button" class="button" id="addPurchaseLine"><svg><use href="#i-plus"/></svg>Add item</button></div><div class="table-wrap"><table class="purchase-lines" aria-label="Purchase order item lines"><thead><tr><th>Item</th><th>Quantity KG</th><th>Rate ₹/KG</th><th>Line value</th><th></th></tr></thead><tbody id="poLineRows"></tbody></table></div><p class="sales-help" id="poTotalPreview">Order value: ₹0.00</p></div><p class="sales-message" id="poError" role="status"></p><p class="sales-help">Save creates a PO only. Stock appears after a goods receipt is approved and posted.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelPurchaseOrder">Cancel</button><button type="submit" class="button primary">Create PO</button></div></form></div></div>
   <div class="modal-backdrop" id="purchaseReceiptModal" role="dialog" aria-modal="true" aria-labelledby="purchaseReceiptModalTitle"><div class="modal" style="width:min(900px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="purchaseReceiptModalTitle">Record goods receipt</h2><p id="purchaseReceiptContext">PO details</p></div><button class="icon-button" id="closePurchaseReceipt" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="purchaseReceiptForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="grnInvoice">Vendor invoice / challan</label><input id="grnInvoice" required placeholder="Invoice or challan number"></div><div class="form-field"><label for="grnTransporter">Transporter</label><input id="grnTransporter" placeholder="Transporter name"></div></div><div class="purchase-form-section"><div><h3>Items received against this PO</h3><span class="card-note">Enter 0 for items not delivered in this receipt.</span></div><div class="table-wrap"><table class="purchase-lines" aria-label="Goods receipt item lines"><thead><tr><th>Item</th><th>Ordered</th><th>Already received</th><th>Open to receive</th><th>Accept now KG</th><th>Material value</th></tr></thead><tbody id="grnLineRows"></tbody></table></div></div><div class="purchase-form-section"><h3>Incidental charges</h3><div class="form-grid"><div class="form-field"><label for="grnFreight">Freight ₹</label><input id="grnFreight" type="number" min="0" step="0.01" value="0"></div><div class="form-field"><label for="grnHandling">Handling ₹</label><input id="grnHandling" type="number" min="0" step="0.01" value="0"></div><div class="form-field"><label for="grnOther">Other incidental ₹</label><input id="grnOther" type="number" min="0" step="0.01" value="0"></div></div></div><div class="purchase-cost"><div><span>Material value</span><strong id="grnMaterialPreview">₹0.00</strong></div><div><span>Incidental charges</span><strong id="grnChargePreview">₹0.00</strong></div><div><span>Receipt landed total</span><strong id="grnLandedPreview">₹0.00</strong></div></div><div class="purchase-form-section"><h3>Landed cost by received item</h3><div class="table-wrap"><table class="purchase-lines" aria-label="Landed cost allocation preview"><thead><tr><th>Item</th><th>Accepted KG</th><th>Allocated charges</th><th>Landed ₹/KG</th></tr></thead><tbody id="grnCostRows"></tbody></table></div></div><p class="sales-message" id="grnError" role="status"></p><p class="sales-help">Prototype allocation: incidental charges are divided across received lines by accepted KG. Final allocation method and tax treatment require approval before APEX implementation.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelPurchaseReceipt">Cancel</button><button type="submit" class="button primary">Submit receipt for approval</button></div></form></div></div>
   <div class="modal-backdrop" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
@@ -702,6 +721,12 @@
       {date:'2026-10-16', ref:'HOLD-2610-002', type:'Quality hold', business:'Venkateshwara Industries', location:'Factory 2', status:'Available', code:'WSR-PLN-M10', qty:-40},
       {date:'2026-10-16', ref:'HOLD-2610-002', type:'Quality hold', business:'Venkateshwara Industries', location:'Factory 2', status:'Held', code:'WSR-PLN-M10', qty:40}
     ];
+    const locations = [
+      {id:'LOC-001',code:'DF-F1',name:'Factory 1',business:'Dwarka Fasteners',type:'FACTORY',custodian:'',address:'Manufacturing and stores',status:'ACTIVE'},
+      {id:'LOC-002',code:'VI-F2',name:'Factory 2',business:'Venkateshwara Industries',type:'FACTORY',custodian:'',address:'Manufacturing and stores',status:'ACTIVE'},
+      {id:'LOC-003',code:'DF-JW-BZW',name:'Bright Zinc Works',business:'Dwarka Fasteners',type:'JOB_WORKER',custodian:'Bright Zinc Works',address:'External job-worker custody',status:'ACTIVE'},
+      {id:'LOC-004',code:'VI-TRANSIT',name:'Inter-company transit',business:'Venkateshwara Industries',type:'TRANSIT',custodian:'',address:'Temporary in-transit stock bucket',status:'ACTIVE'}
+    ];
     const inventoryRequests = [];
     const productionBatches = [];
     const purchaseOrders = [
@@ -728,6 +753,8 @@
     let receivingJobId = null;
     let producingJobId = null;
     let inventoryRequestType = 'TRANSFER';
+    let editingLocationId = null;
+    let selectedLocationId = 'LOC-001';
     let receivingPurchaseId = null;
     jobWorkOrders.forEach(order => { order.issuedToProduction = 0; order.rejected = 0; order.loss = order.status === 'CLOSED' ? order.dispatch - order.received : 0; });
     const jobOutstanding = order => Math.max(0, Math.round((order.dispatch - order.received - order.rejected - order.loss) * 1000) / 1000);
@@ -748,6 +775,7 @@
       $(`#${view}View`).classList.add('active');
       if (window.innerWidth <= 760) $('#sidebar').classList.remove('mobile-open');
       if (view === 'items') renderItems();
+      if (view === 'locations') renderLocations();
       if (view === 'purchasing') renderPurchasing();
       if (view === 'jobWork') renderJobWork();
       if (view === 'sales') { renderSaleProducts(); renderSaleCart(); }
@@ -835,6 +863,71 @@
         row.closing += movement.qty;
       }
       return [...groups.values()].filter(row => row.closing > 0.0001);
+    }
+    const locationTypes = {FACTORY:'Factory',WAREHOUSE:'Warehouse',JOB_WORKER:'Job-worker custody',TRANSIT:'In transit'};
+    const internalLocation = location => location.type === 'FACTORY' || location.type === 'WAREHOUSE';
+    const locationStock = location => inventoryBalances().filter(row => row.business === location.business && row.location === location.name);
+    const locationUsed = location => inventoryMovements.some(row => row.business === location.business && row.location === location.name) || purchaseOrders.some(order => order.business === location.business && order.location === location.name);
+    function syncPurchaseDestinations() {
+      const select = $('#poLocation'), previous = select.value;
+      select.innerHTML = locations.filter(location => location.status === 'ACTIVE' && internalLocation(location) && location.business === $('#poBusiness').value).map(location => `<option value="${safe(location.name)}">${safe(location.name)}</option>`).join('');
+      if ([...select.options].some(option => option.value === previous)) select.value = previous;
+    }
+    function syncInventoryLocationFilter() {
+      const select = $('#inventoryLocation'), previous = select.value;
+      select.innerHTML = '<option value="">All locations</option>' + [...new Set(locations.map(location => location.name))].map(name => `<option value="${safe(name)}">${safe(name)}</option>`).join('');
+      if ([...select.options].some(option => option.value === previous)) select.value = previous;
+    }
+    function renderLocations() {
+      const active = locations.filter(location => location.status === 'ACTIVE');
+      $('#locationActiveCount').textContent = active.length;
+      $('#locationInternalCount').textContent = active.filter(internalLocation).length;
+      $('#locationExternalCount').textContent = active.filter(location => location.type === 'JOB_WORKER').length;
+      $('#locationTransitCount').textContent = active.filter(location => location.type === 'TRANSIT').length;
+      const query = $('#locationSearch').value.trim().toLowerCase(), business = $('#locationBusinessFilter').value, type = $('#locationTypeFilter').value, status = $('#locationStatusFilter').value;
+      const filtered = locations.filter(location => (!query || `${location.code} ${location.name} ${location.custodian} ${location.address}`.toLowerCase().includes(query)) && (!business || location.business === business) && (!type || location.type === type) && (!status || location.status === status));
+      $('#locationRows').innerHTML = filtered.map(location => {
+        const stock = locationStock(location), quantity = stock.reduce((sum,row) => sum + row.closing,0), skuCount = new Set(stock.map(row => row.code)).size;
+        return `<tr class="${selectedLocationId === location.id ? 'selected' : ''}"><td><button type="button" class="location-table-link" data-location-view="${location.id}">${safe(location.name)}</button><br><span class="card-note">${safe(location.code)}</span></td><td>${safe(location.business)}</td><td><span class="tag ${location.type === 'JOB_WORKER' ? 'partial' : location.type === 'TRANSIT' ? 'dispatched' : 'ok'}">${locationTypes[location.type]}</span></td><td>${safe(location.custodian || location.address || '—')}</td><td class="qty">${kg(quantity)}</td><td>${skuCount}</td><td><span class="tag ${location.status === 'ACTIVE' ? 'ok' : 'inactive'}">${location.status === 'ACTIVE' ? 'Active' : 'Inactive'}</span></td><td><div class="row-actions"><button type="button" data-location-view="${location.id}" aria-label="View ${safe(location.name)} stock">${icon('i-eye')}</button><button type="button" data-location-edit="${location.id}" aria-label="Edit ${safe(location.name)}">${icon('i-edit')}</button></div></td></tr>`;
+      }).join('');
+      $('#locationEmpty').hidden = filtered.length > 0;
+      $('#locationResultCount').textContent = `${filtered.length} location${filtered.length === 1 ? '' : 's'}`;
+      renderLocationDetail();
+    }
+    function renderLocationDetail() {
+      const location = locations.find(row => row.id === selectedLocationId) || locations[0];
+      if (!location) { $('#locationDetailCard').hidden = true; return; }
+      $('#locationDetailCard').hidden = false;
+      selectedLocationId = location.id;
+      const stock = locationStock(location);
+      $('#locationDetailTitle').textContent = `${location.name} · Stock detail`;
+      $('#locationDetailMeta').innerHTML = `<span><strong>Code:</strong> ${safe(location.code)}</span><span><strong>Business:</strong> ${safe(location.business)}</span><span><strong>Type:</strong> ${locationTypes[location.type]}</span><span><strong>Total:</strong> ${kg(stock.reduce((sum,row) => sum + row.closing,0))}</span>`;
+      $('#locationStockRows').innerHTML = stock.map(row => `<tr><td><strong>${safe(inventoryItem(row.code)?.name || row.code)}</strong><br><span class="card-note">${row.code}</span></td><td><span class="tag ${row.status === 'Available' ? 'ok' : row.status === 'In transit' ? 'dispatched' : 'partial'}">${safe(row.status)}</span></td><td class="qty">${kg(row.closing)}</td></tr>`).join('');
+      $('#locationStockEmpty').hidden = stock.length > 0;
+    }
+    function closeLocationModal() { $('#locationModal').classList.remove('open'); editingLocationId = null; }
+    function updateLocationCustodian() { const external = $('#locationType').value === 'JOB_WORKER'; $('#locationCustodianField').hidden = !external; $('#locationCustodian').required = external; }
+    function openLocationModal(location) {
+      editingLocationId = location?.id || null;
+      $('#locationForm').reset();
+      $('#locationError').textContent = '';
+      $('#locationModalTitle').textContent = location ? 'Edit location' : 'Add location';
+      $('#locationCode').value = location?.code || '';
+      $('#locationName').value = location?.name || '';
+      $('#locationBusiness').value = location?.business || 'Dwarka Fasteners';
+      $('#locationType').value = location?.type || 'FACTORY';
+      $('#locationCustodian').value = location?.custodian || '';
+      $('#locationAddress').value = location?.address || '';
+      $('#locationStatus').value = location?.status || 'ACTIVE';
+      const used = !!location && locationUsed(location);
+      $('#locationCode').readOnly = used;
+      $('#locationName').readOnly = used;
+      $('#locationBusiness').disabled = used;
+      $('#locationType').disabled = used;
+      $('#locationFormHelp').textContent = used ? 'Code, name, business and type are locked because documents or stock movements reference this location.' : 'Locations with posted stock or open purchase orders cannot be deactivated.';
+      updateLocationCustodian();
+      $('#locationModal').classList.add('open');
+      setTimeout(() => (used ? $('#locationAddress') : $('#locationCode')).focus(),30);
     }
     function renderInventory() {
       const balances = inventoryBalances();
@@ -1055,7 +1148,44 @@
     $('#scanButton').addEventListener('click', () => showToast('Barcode scanner entry point ready for APEX integration.'));
     $('#exportButton').addEventListener('click', () => showToast('Item export prepared. APEX will generate the final file.'));
     $('#jobWorkExport').addEventListener('click', () => showToast('Job-worker balance export prepared.'));
-    $('#newPurchaseOrder').addEventListener('click', () => { $('#purchaseOrderForm').reset(); $('#poLineRows').innerHTML = ''; addPurchaseLine(); $('#poExpected').value = new Date().toISOString().slice(0,10); $('#poError').textContent = ''; $('#purchaseOrderModal').classList.add('open'); setTimeout(() => $('#poVendor').focus(),30); });
+    $('#addLocation').addEventListener('click', () => openLocationModal());
+    $('#closeLocationModal').addEventListener('click',closeLocationModal);
+    $('#cancelLocationModal').addEventListener('click',closeLocationModal);
+    $('#locationModal').addEventListener('click',event => { if (event.target === $('#locationModal')) closeLocationModal(); });
+    $('#locationType').addEventListener('change',updateLocationCustodian);
+    ['locationSearch','locationBusinessFilter','locationTypeFilter','locationStatusFilter'].forEach(id => $(`#${id}`).addEventListener('input',renderLocations));
+    $('#locationRows').addEventListener('click',event => {
+      const edit = event.target.closest('[data-location-edit]'), view = event.target.closest('[data-location-view]');
+      if (edit) openLocationModal(locations.find(location => location.id === edit.dataset.locationEdit));
+      else if (view) { selectedLocationId = view.dataset.locationView; renderLocations(); $('#locationDetailCard').scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    });
+    $('#locationOpenInventory').addEventListener('click', () => {
+      const location = locations.find(row => row.id === selectedLocationId);
+      if (!location) return;
+      $('#inventoryBusiness').value = location.business;
+      $('#inventoryLocation').value = location.name;
+      showInventoryTab('balances'); setView('inventory');
+    });
+    $('#locationForm').addEventListener('submit',event => {
+      event.preventDefault();
+      const old = locations.find(location => location.id === editingLocationId);
+      const code = $('#locationCode').value.trim().toUpperCase(), name = $('#locationName').value.trim(), business = $('#locationBusiness').value, type = $('#locationType').value, status = $('#locationStatus').value;
+      const custodian = $('#locationCustodian').value.trim(), address = $('#locationAddress').value.trim(), error = $('#locationError');
+      if (!/^[A-Z0-9-]{2,24}$/.test(code)) { error.textContent = 'Use 2–24 letters, numbers or hyphens for the location code.'; return; }
+      if (!name) { error.textContent = 'Enter a location name.'; return; }
+      if (type === 'JOB_WORKER' && !custodian) { error.textContent = 'Enter the external job worker or custodian.'; return; }
+      if (old && locationUsed(old) && (old.code !== code || old.name !== name || old.business !== business || old.type !== type)) { error.textContent = 'Location identity is locked because documents or stock movements reference it.'; return; }
+      if (locations.some(location => location.id !== editingLocationId && location.business === business && location.code.toLowerCase() === code.toLowerCase())) { error.textContent = 'This code already exists for the selected business.'; return; }
+      if (locations.some(location => location.id !== editingLocationId && location.name.toLowerCase() === name.toLowerCase())) { error.textContent = 'Use a distinct location name in this prototype.'; return; }
+      if (status === 'INACTIVE' && old && (locationStock(old).length || purchaseOrders.some(order => order.business === old.business && order.location === old.name && purchaseOrderOpenQty(order) > 0))) { error.textContent = 'A location with posted stock or an open purchase order cannot be deactivated.'; return; }
+      const record = {id:old?.id || `LOC-${String(locations.length + 1).padStart(3,'0')}`,code,name,business,type,custodian:type === 'JOB_WORKER' ? custodian : '',address,status};
+      if (old) Object.assign(old,record); else locations.push(record);
+      selectedLocationId = record.id;
+      closeLocationModal(); syncPurchaseDestinations(); syncInventoryLocationFilter(); renderLocations();
+      showToast(old ? 'Location updated in prototype.' : 'Location added in prototype.');
+    });
+    $('#poBusiness').addEventListener('change',syncPurchaseDestinations);
+    $('#newPurchaseOrder').addEventListener('click', () => { $('#purchaseOrderForm').reset(); syncPurchaseDestinations(); $('#poLineRows').innerHTML = ''; addPurchaseLine(); $('#poExpected').value = new Date().toISOString().slice(0,10); $('#poError').textContent = ''; $('#purchaseOrderModal').classList.add('open'); setTimeout(() => $('#poVendor').focus(),30); });
     $('#closePurchaseOrder').addEventListener('click',closePurchaseOrder);
     $('#cancelPurchaseOrder').addEventListener('click',closePurchaseOrder);
     $('#purchaseOrderModal').addEventListener('click',event => { if (event.target === $('#purchaseOrderModal')) closePurchaseOrder(); });
@@ -1295,9 +1425,12 @@
     });
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#globalSearch').focus(); }
-      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); closeProductionModal(); closeInventoryRequest(); closePurchaseOrder(); closePurchaseReceipt(); }
+      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); closeProductionModal(); closeInventoryRequest(); closePurchaseOrder(); closePurchaseReceipt(); closeLocationModal(); }
     });
     renderItems();
+    syncPurchaseDestinations();
+    syncInventoryLocationFilter();
+    renderLocations();
     renderPurchasing();
     renderJobWork();
     renderSaleProducts();
