@@ -264,6 +264,20 @@
     .page-buttons button { min-width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px; background: white; }
     .page-buttons button.current { color: white; background: var(--primary); border-color: var(--primary); }
     .empty { padding: 48px 20px; color: var(--muted); text-align: center; }
+    .purchase-cost { margin-top: 18px; padding: 13px 15px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; border: 1px solid var(--primary-border); border-radius: 10px; background: var(--primary-soft); }
+    .purchase-cost span { display: block; margin-bottom: 5px; color: var(--text-soft); font-size: 11px; }
+    .purchase-cost strong { font-size: 15px; }
+    .purchase-lines { width: 100%; border-collapse: collapse; }
+    .purchase-lines th, .purchase-lines td { padding: 9px 7px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    .purchase-lines th { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+    .purchase-lines select, .purchase-lines input { width: 100%; min-width: 90px; height: 38px; padding: 0 8px; border: 1px solid #d4d4d8; border-radius: 8px; background: white; }
+    .purchase-lines .purchase-item-select { min-width: 230px; }
+    .purchase-line-total { white-space: nowrap; font-weight: 700; }
+    .purchase-line-note { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .purchase-form-section { margin-top: 20px; }
+    .purchase-form-section > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .purchase-form-section h3 { margin: 0; font-size: 13px; }
+    .purchase-form-section .table-wrap { border: 1px solid var(--border); border-radius: 9px; }
 
     .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.48); backdrop-filter: blur(3px); }
     .modal-backdrop.open { display: flex; }
@@ -319,7 +333,7 @@
       .form-field.span-2 { grid-column: auto; }
       .toolbar select { width: calc(50% - 5px); }
       .result-count { width: 100%; margin-left: 0; }
-      .metric-strip { grid-template-columns: 1fr; }
+      .metric-strip, .purchase-cost { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -365,8 +379,10 @@
         <button class="nav-item demo-link"><svg><use href="#i-users"/></svg><span class="nav-label">Business Partners</span></button>
         <button class="nav-item demo-link"><svg><use href="#i-building"/></svg><span class="nav-label">Locations</span></button>
         <div class="nav-section">Operations</div>
-        <button class="nav-item demo-link"><svg><use href="#i-cart"/></svg><span class="nav-label">Purchasing</span></button>
+        <button class="nav-item" data-view="purchasing"><svg><use href="#i-cart"/></svg><span class="nav-label">Purchasing</span></button>
+        <!-- Production navigation will be enabled when its module is ready.
         <button class="nav-item demo-link"><svg><use href="#i-factory"/></svg><span class="nav-label">Production</span></button>
+        -->
         <button class="nav-item" data-view="jobWork"><svg><use href="#i-truck"/></svg><span class="nav-label">Job Work</span><span class="nav-badge">6</span></button>
         <button class="nav-item" data-view="sales"><svg><use href="#i-cart"/></svg><span class="nav-label">Sales</span></button>
         <button class="nav-item" data-view="inventory"><svg><use href="#i-boxes"/></svg><span class="nav-label">Inventory</span></button>
@@ -476,6 +492,15 @@
           </article>
         </section>
 
+        <section class="view" id="purchasingView">
+          <div class="page-header"><div><div class="eyebrow">Operations / Purchasing</div><h1>Purchasing</h1><p class="subtitle">Create purchase orders, receive in parts, capture incidental charges, and review landed cost before stock posting.</p></div><div class="actions"><button class="button primary" id="newPurchaseOrder"><svg><use href="#i-plus"/></svg>New purchase order</button></div></div>
+          <div class="metric-strip"><article class="metric-card"><div class="metric-icon blue"><svg><use href="#i-file"/></svg></div><div class="metric-copy"><span>Open purchase orders</span><strong id="purchaseOpenCount">0</strong><small>With quantity outstanding</small></div></article><article class="metric-card"><div class="metric-icon amber"><svg><use href="#i-truck"/></svg></div><div class="metric-copy"><span>Awaiting receipt</span><strong id="purchaseOpenQty">0 kg</strong><small>Across open orders</small></div></article><article class="metric-card"><div class="metric-icon red"><svg><use href="#i-clock"/></svg></div><div class="metric-copy"><span>Receipts for approval</span><strong id="purchaseApprovalCount">0</strong><small>No stock change until posting</small></div></article><article class="metric-card"><div class="metric-icon green"><svg><use href="#i-boxes"/></svg></div><div class="metric-copy"><span>Posted receipts</span><strong id="purchasePostedQty">0 kg</strong><small>Purchase stock added to ledger</small></div></article></div>
+          <div class="toolbar"><div class="field-search"><svg><use href="#i-search"/></svg><input id="purchaseSearch" type="search" placeholder="Search PO, vendor, item or invoice..." aria-label="Search purchase orders"></div><select id="purchaseStatusFilter" aria-label="Purchase order status"><option value="">All statuses</option><option value="OPEN">Open</option><option value="PARTIAL">Partially received</option><option value="RECEIVED">Fully received</option></select><select id="purchaseBusinessFilter" aria-label="Purchase business"><option value="">All businesses</option><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select><span class="result-count" id="purchaseResultCount"></span></div>
+          <article class="card table-card"><div class="card-header"><div><h2>Purchase orders</h2><div class="card-note">One PO can contain several item lines. A PO does not increase stock.</div></div></div><div class="table-wrap"><table aria-label="Purchase orders"><thead><tr><th>PO / Vendor</th><th>Items</th><th>Business / destination</th><th>Ordered</th><th>Received</th><th>Outstanding</th><th>Order value</th><th>Expected</th><th>Status</th><th></th></tr></thead><tbody id="purchaseOrderRows"></tbody></table></div><div class="empty" id="purchaseEmpty" hidden>No purchase orders match the filters.</div></article>
+          <article class="card table-card" style="margin-top:16px"><div class="card-header"><div><h2>Goods receipts</h2><div class="card-note">Each GRN records accepted quantities and landed cost for its individual PO lines.</div></div></div><div class="table-wrap"><table aria-label="Goods receipts"><thead><tr><th>GRN / PO</th><th>Vendor invoice</th><th>Items / accepted quantities</th><th>Transporter</th><th>Material</th><th>Incidental</th><th>Line landed rates</th><th>Status</th><th></th></tr></thead><tbody id="purchaseReceiptRows"></tbody></table></div><div class="empty" id="purchaseReceiptEmpty" hidden>No goods receipts in this prototype.</div></article>
+          <p class="sales-help inventory-detail">Prototype data is held in this browser session. The final APEX workflow needs separate purchase entry and approval roles, authoritative validation, and an atomic stock posting service.</p>
+        </section>
+
         <section class="view" id="jobWorkView">
           <div class="page-header">
             <div><div class="eyebrow">Operations / Job Work</div><h1>Job Work Management</h1><p class="subtitle">Track plating and external processing from dispatch through partial receipt, variance review and closure.</p></div>
@@ -546,6 +571,8 @@
     </section>
   </div>
 
+  <div class="modal-backdrop" id="purchaseOrderModal" role="dialog" aria-modal="true" aria-labelledby="purchaseOrderModalTitle"><div class="modal" style="width:min(900px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="purchaseOrderModalTitle">New purchase order</h2><p>Add all products to one order for the selected vendor and destination.</p></div><button class="icon-button" id="closePurchaseOrder" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="purchaseOrderForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="poVendor">Vendor</label><input id="poVendor" list="purchaseVendors" required placeholder="Search or enter vendor"><datalist id="purchaseVendors"><option value="Shree Steel Traders"><option value="National Fastener Supply"><option value="Allied Metals"></datalist></div><div class="form-field"><label class="required" for="poBusiness">Buying business</label><select id="poBusiness" required><option>Dwarka Fasteners</option><option>Venkateshwara Industries</option></select></div><div class="form-field"><label class="required" for="poLocation">Receipt destination</label><select id="poLocation" required><option>Factory 1</option><option>Factory 2</option></select></div><div class="form-field"><label class="required" for="poExpected">Expected delivery</label><input id="poExpected" type="date" required></div><div class="form-field"><label for="poTransporter">Expected transporter</label><input id="poTransporter" placeholder="Optional at PO stage"></div></div><div class="purchase-form-section"><div><h3>Purchase order items</h3><button type="button" class="button" id="addPurchaseLine"><svg><use href="#i-plus"/></svg>Add item</button></div><div class="table-wrap"><table class="purchase-lines" aria-label="Purchase order item lines"><thead><tr><th>Item</th><th>Quantity KG</th><th>Rate ₹/KG</th><th>Line value</th><th></th></tr></thead><tbody id="poLineRows"></tbody></table></div><p class="sales-help" id="poTotalPreview">Order value: ₹0.00</p></div><p class="sales-message" id="poError" role="status"></p><p class="sales-help">Save creates a PO only. Stock appears after a goods receipt is approved and posted.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelPurchaseOrder">Cancel</button><button type="submit" class="button primary">Create PO</button></div></form></div></div>
+  <div class="modal-backdrop" id="purchaseReceiptModal" role="dialog" aria-modal="true" aria-labelledby="purchaseReceiptModalTitle"><div class="modal" style="width:min(900px,100%)"><div class="modal-header"><div class="modal-title"><h2 id="purchaseReceiptModalTitle">Record goods receipt</h2><p id="purchaseReceiptContext">PO details</p></div><button class="icon-button" id="closePurchaseReceipt" aria-label="Close"><svg><use href="#i-close"/></svg></button></div><form id="purchaseReceiptForm"><div class="form"><div class="form-grid"><div class="form-field"><label class="required" for="grnInvoice">Vendor invoice / challan</label><input id="grnInvoice" required placeholder="Invoice or challan number"></div><div class="form-field"><label for="grnTransporter">Transporter</label><input id="grnTransporter" placeholder="Transporter name"></div></div><div class="purchase-form-section"><div><h3>Items received against this PO</h3><span class="card-note">Enter 0 for items not delivered in this receipt.</span></div><div class="table-wrap"><table class="purchase-lines" aria-label="Goods receipt item lines"><thead><tr><th>Item</th><th>Ordered</th><th>Already received</th><th>Open to receive</th><th>Accept now KG</th><th>Material value</th></tr></thead><tbody id="grnLineRows"></tbody></table></div></div><div class="purchase-form-section"><h3>Incidental charges</h3><div class="form-grid"><div class="form-field"><label for="grnFreight">Freight ₹</label><input id="grnFreight" type="number" min="0" step="0.01" value="0"></div><div class="form-field"><label for="grnHandling">Handling ₹</label><input id="grnHandling" type="number" min="0" step="0.01" value="0"></div><div class="form-field"><label for="grnOther">Other incidental ₹</label><input id="grnOther" type="number" min="0" step="0.01" value="0"></div></div></div><div class="purchase-cost"><div><span>Material value</span><strong id="grnMaterialPreview">₹0.00</strong></div><div><span>Incidental charges</span><strong id="grnChargePreview">₹0.00</strong></div><div><span>Receipt landed total</span><strong id="grnLandedPreview">₹0.00</strong></div></div><div class="purchase-form-section"><h3>Landed cost by received item</h3><div class="table-wrap"><table class="purchase-lines" aria-label="Landed cost allocation preview"><thead><tr><th>Item</th><th>Accepted KG</th><th>Allocated charges</th><th>Landed ₹/KG</th></tr></thead><tbody id="grnCostRows"></tbody></table></div></div><p class="sales-message" id="grnError" role="status"></p><p class="sales-help">Prototype allocation: incidental charges are divided across received lines by accepted KG. Final allocation method and tax treatment require approval before APEX implementation.</p></div><div class="modal-footer"><button type="button" class="button" id="cancelPurchaseReceipt">Cancel</button><button type="submit" class="button primary">Submit receipt for approval</button></div></form></div></div>
   <div class="modal-backdrop" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
     <div class="modal">
       <div class="modal-header"><div class="modal-title"><h2 id="modalHeading">Add Item</h2><p>Fields marked with an asterisk are required.</p></div><button class="icon-button" id="closeModal" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
@@ -677,6 +704,16 @@
     ];
     const inventoryRequests = [];
     const productionBatches = [];
+    const purchaseOrders = [
+      {id:'PO-2610-041',vendor:'Shree Steel Traders',business:'Dwarka Fasteners',location:'Factory 1',expected:'2026-10-20',transporter:'Eastline Logistics',lines:[{id:'L1',code:'MSW-08-COIL',qty:5000,received:2450,rate:54.5},{id:'L2',code:'NUT-M10-88-ZP',qty:1200,received:0,rate:94}]},
+      {id:'PO-2610-044',vendor:'Allied Metals',business:'Venkateshwara Industries',location:'Factory 2',expected:'2026-10-14',transporter:'City Cargo',lines:[{id:'L1',code:'WSR-PLN-M10',qty:600,received:600,rate:116}]},
+      {id:'PO-2610-052',vendor:'National Fastener Supply',business:'Dwarka Fasteners',location:'Factory 1',expected:'2026-11-06',transporter:'North Roadways',lines:[{id:'L1',code:'BLT-M10-050-88',qty:3000,received:0,rate:93},{id:'L2',code:'WSR-PLN-M10',qty:900,received:0,rate:108}]}
+    ];
+    const purchaseReceipts = [
+      {id:'GRN-2610-018',poId:'PO-2610-041',invoice:'SST-2106',lines:[{poLineId:'L1',code:'MSW-08-COIL',qty:2450,rate:54.5}],transporter:'Eastline Logistics',freight:7200,handling:900,other:0,status:'POSTED'},
+      {id:'GRN-2610-022',poId:'PO-2610-044',invoice:'AM-6621',lines:[{poLineId:'L1',code:'WSR-PLN-M10',qty:600,rate:116}],transporter:'City Cargo',freight:1200,handling:0,other:0,status:'POSTED'},
+      {id:'GRN-2611-003',poId:'PO-2610-052',invoice:'NFS-9087',lines:[{poLineId:'L1',code:'BLT-M10-050-88',qty:400,rate:93},{poLineId:'L2',code:'WSR-PLN-M10',qty:250,rate:108}],transporter:'North Roadways',freight:1750,handling:350,other:0,status:'PENDING'}
+    ];
 
     const $ = (selector, root=document) => root.querySelector(selector);
     const $$ = (selector, root=document) => [...root.querySelectorAll(selector)];
@@ -691,6 +728,7 @@
     let receivingJobId = null;
     let producingJobId = null;
     let inventoryRequestType = 'TRANSFER';
+    let receivingPurchaseId = null;
     jobWorkOrders.forEach(order => { order.issuedToProduction = 0; order.rejected = 0; order.loss = order.status === 'CLOSED' ? order.dispatch - order.received : 0; });
     const jobOutstanding = order => Math.max(0, Math.round((order.dispatch - order.received - order.rejected - order.loss) * 1000) / 1000);
     const acceptedAvailable = order => Math.max(0, Math.round((order.received - order.issuedToProduction) * 1000) / 1000);
@@ -710,6 +748,7 @@
       $(`#${view}View`).classList.add('active');
       if (window.innerWidth <= 760) $('#sidebar').classList.remove('mobile-open');
       if (view === 'items') renderItems();
+      if (view === 'purchasing') renderPurchasing();
       if (view === 'jobWork') renderJobWork();
       if (view === 'sales') { renderSaleProducts(); renderSaleCart(); }
       if (view === 'inventory') renderInventory();
@@ -849,6 +888,100 @@
     }
     const money = value => `₹${Number(value).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
     const safe = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+    const purchaseOutstanding = line => Math.max(0, Math.round((line.qty - line.received) * 1000) / 1000);
+    const purchasePending = (order,line) => purchaseReceipts.filter(receipt => receipt.poId === order.id && receipt.status === 'PENDING').flatMap(receipt => receipt.lines).filter(receiptLine => receiptLine.poLineId === line.id).reduce((sum,receiptLine) => sum + receiptLine.qty,0);
+    const purchaseOrderQty = order => order.lines.reduce((sum,line) => sum + line.qty,0);
+    const purchaseReceivedQty = order => order.lines.reduce((sum,line) => sum + line.received,0);
+    const purchaseOrderOpenQty = order => order.lines.reduce((sum,line) => sum + purchaseOutstanding(line),0);
+    const purchaseItemOptions = () => items.filter(item => item.status === 'ACTIVE' && (item.source === 'PURCHASED' || item.source === 'BOTH')).map(item => `<option value="${item.code}">${safe(item.name)} · ${item.code}</option>`).join('');
+    function allocatePurchaseCharges(lines,charges) {
+      const totalQty = lines.reduce((sum,line) => sum + line.qty,0), totalCents = Math.round(charges * 100);
+      let assignedCents = 0;
+      return lines.map((line,index) => {
+        const cents = index === lines.length - 1 ? totalCents - assignedCents : Math.round(totalCents * line.qty / totalQty);
+        assignedCents += cents;
+        const allocatedCharge = cents / 100;
+        return {...line,allocatedCharge,landedRate:line.rate + allocatedCharge / line.qty};
+      });
+    }
+    function addPurchaseLine() {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td><select class="purchase-item-select" aria-label="Purchase item" required>${purchaseItemOptions()}</select></td><td><input class="purchase-line-qty" aria-label="Ordered quantity KG" type="number" min="0.001" step="0.001" required></td><td><input class="purchase-line-rate" aria-label="Purchase rate per KG" type="number" min="0.01" step="0.01" required></td><td class="purchase-line-total">${money(0)}</td><td><button type="button" class="icon-button" data-remove-po-line aria-label="Remove item line">${icon('i-close')}</button></td>`;
+      $('#poLineRows').append(row);
+      updatePurchaseOrderPreview();
+      return row;
+    }
+    function updatePurchaseOrderPreview() {
+      const total = $$('#poLineRows tr').reduce((sum,row) => {
+        const value = Number($('.purchase-line-qty',row).value || 0) * Number($('.purchase-line-rate',row).value || 0);
+        $('.purchase-line-total',row).textContent = money(value);
+        return sum + value;
+      },0);
+      $('#poTotalPreview').textContent = `Order value: ${money(total)}`;
+    }
+    function renderPurchasing() {
+      const search = $('#purchaseSearch').value.trim().toLowerCase();
+      const statusFilter = $('#purchaseStatusFilter').value;
+      const businessFilter = $('#purchaseBusinessFilter').value;
+      const filtered = purchaseOrders.filter(order => {
+        const status = purchaseOrderOpenQty(order) <= 0 ? 'RECEIVED' : purchaseReceivedQty(order) > 0 ? 'PARTIAL' : 'OPEN';
+        const invoices = purchaseReceipts.filter(receipt => receipt.poId === order.id).map(receipt => receipt.invoice).join(' ');
+        const itemNames = order.lines.map(line => `${line.code} ${inventoryItem(line.code)?.name || ''}`).join(' ');
+        return (!search || `${order.id} ${order.vendor} ${itemNames} ${invoices}`.toLowerCase().includes(search)) && (!statusFilter || status === statusFilter) && (!businessFilter || order.business === businessFilter);
+      });
+      $('#purchaseOpenCount').textContent = purchaseOrders.filter(order => purchaseOrderOpenQty(order) > 0).length;
+      $('#purchaseOpenQty').textContent = kg(purchaseOrders.reduce((sum,order) => sum + purchaseOrderOpenQty(order),0));
+      $('#purchaseApprovalCount').textContent = purchaseReceipts.filter(receipt => receipt.status === 'PENDING').length;
+      $('#purchasePostedQty').textContent = kg(purchaseReceipts.filter(receipt => receipt.status === 'POSTED').reduce((sum,receipt) => sum + receipt.lines.reduce((lineSum,line) => lineSum + line.qty,0),0));
+      $('#purchaseOrderRows').innerHTML = filtered.map(order => {
+        const outstanding = purchaseOrderOpenQty(order), pending = order.lines.reduce((sum,line) => sum + purchasePending(order,line),0);
+        const status = outstanding <= 0 ? ['Fully received','ok'] : purchaseReceivedQty(order) > 0 ? ['Partially received','partial'] : ['Open','dispatched'];
+        const itemSummary = order.lines.map(line => `<strong>${safe(inventoryItem(line.code)?.name || line.code)}</strong><span class="purchase-line-note">${line.code} · ${kg(line.qty)} ordered · ${kg(purchaseOutstanding(line))} open</span>`).join('<br>');
+        return `<tr><td><strong class="job-code">${order.id}</strong><br><span class="card-note">${safe(order.vendor)}</span></td><td>${itemSummary}</td><td>${safe(order.business)}<br><span class="card-note">${safe(order.location)}</span></td><td class="qty">${kg(purchaseOrderQty(order))}</td><td>${kg(purchaseReceivedQty(order))}</td><td class="outstanding">${kg(outstanding)}${pending ? `<br><span class="card-note">${kg(pending)} awaiting approval</span>` : ''}</td><td>${money(order.lines.reduce((sum,line) => sum + line.qty * line.rate,0))}</td><td>${order.expected}</td><td><span class="tag ${status[1]}">${status[0]}</span></td><td>${outstanding - pending > 0.0001 ? `<button type="button" class="button" data-po-receive="${order.id}">Receive</button>` : ''}</td></tr>`;
+      }).join('');
+      $('#purchaseEmpty').hidden = filtered.length > 0;
+      $('#purchaseResultCount').textContent = `${filtered.length} order${filtered.length === 1 ? '' : 's'}`;
+      $('#purchaseReceiptRows').innerHTML = purchaseReceipts.map(receipt => {
+        const order = purchaseOrders.find(row => row.id === receipt.poId);
+        const charges = receipt.freight + receipt.handling + receipt.other;
+        const allocated = allocatePurchaseCharges(receipt.lines,charges);
+        return `<tr><td><strong class="job-code">${receipt.id}</strong><br><span class="card-note">${receipt.poId}</span></td><td>${safe(receipt.invoice)}<br><span class="card-note">${safe(order.vendor)}</span></td><td>${allocated.map(line => `<strong>${safe(inventoryItem(line.code)?.name || line.code)}</strong><span class="purchase-line-note">${line.code} · ${kg(line.qty)} → ${safe(order.location)}</span>`).join('<br>')}</td><td>${safe(receipt.transporter || '—')}</td><td>${money(receipt.lines.reduce((sum,line) => sum + line.qty * line.rate,0))}</td><td>${money(charges)}</td><td>${allocated.map(line => `<strong>${money(line.landedRate)}/kg</strong><span class="purchase-line-note">${line.code} · ${money(line.allocatedCharge)} charges</span>`).join('<br>')}</td><td><span class="tag ${receipt.status === 'POSTED' ? 'ok' : 'pending'}">${receipt.status === 'POSTED' ? 'Posted' : 'Awaiting approval'}</span></td><td>${receipt.status === 'PENDING' ? `<button type="button" class="button primary" data-grn-post="${receipt.id}">Approve &amp; post</button>` : ''}</td></tr>`;
+      }).join('');
+      $('#purchaseReceiptEmpty').hidden = purchaseReceipts.length > 0;
+    }
+    function closePurchaseOrder() { $('#purchaseOrderModal').classList.remove('open'); }
+    function closePurchaseReceipt() { $('#purchaseReceiptModal').classList.remove('open'); receivingPurchaseId = null; }
+    function previewPurchaseReceipt() {
+      const order = purchaseOrders.find(row => row.id === receivingPurchaseId);
+      if (!order) return;
+      const lines = $$('#grnLineRows tr').map(row => {
+        const source = order.lines.find(line => line.id === row.dataset.poLineId);
+        const qty = Number($('.grn-line-qty',row).value || 0);
+        $('.grn-line-material',row).textContent = money(qty * source.rate);
+        return {poLineId:source.id,code:source.code,qty,rate:source.rate};
+      }).filter(line => line.qty > 0);
+      const charges = ['grnFreight','grnHandling','grnOther'].reduce((sum,id) => sum + Number($(`#${id}`).value || 0),0);
+      const allocated = lines.length ? allocatePurchaseCharges(lines,charges) : [];
+      const material = lines.reduce((sum,line) => sum + line.qty * line.rate,0);
+      $('#grnMaterialPreview').textContent = money(material);
+      $('#grnChargePreview').textContent = money(charges);
+      $('#grnLandedPreview').textContent = money(material + charges);
+      $('#grnCostRows').innerHTML = allocated.map(line => `<tr><td>${safe(inventoryItem(line.code)?.name || line.code)}<span class="purchase-line-note">${line.code}</span></td><td>${kg(line.qty)}</td><td>${money(line.allocatedCharge)}</td><td><strong>${money(line.landedRate)}</strong>/kg</td></tr>`).join('') || '<tr><td colspan="4" class="card-note">Enter accepted quantities to preview landed cost per item.</td></tr>';
+    }
+    function openPurchaseReceipt(order) {
+      receivingPurchaseId = order.id;
+      $('#purchaseReceiptForm').reset();
+      $('#grnError').textContent = '';
+      $('#purchaseReceiptContext').textContent = `${order.id} · ${order.vendor} · ${order.lines.length} item line${order.lines.length === 1 ? '' : 's'}`;
+      $('#grnLineRows').innerHTML = order.lines.map(line => {
+        const open = Math.max(0,Math.round((purchaseOutstanding(line) - purchasePending(order,line)) * 1000) / 1000);
+        return `<tr data-po-line-id="${line.id}"><td><strong>${safe(inventoryItem(line.code)?.name || line.code)}</strong><span class="purchase-line-note">${line.code} · ${money(line.rate)}/kg</span></td><td>${kg(line.qty)}</td><td>${kg(line.received)}</td><td>${kg(open)}</td><td><input class="grn-line-qty" aria-label="Accept ${safe(inventoryItem(line.code)?.name || line.code)} KG" type="number" min="0" max="${open}" step="0.001" value="0" ${open <= 0 ? 'disabled' : ''}></td><td class="grn-line-material">${money(0)}</td></tr>`;
+      }).join('');
+      $('#grnTransporter').value = order.transporter || '';
+      previewPurchaseReceipt();
+      $('#purchaseReceiptModal').classList.add('open');
+      setTimeout(() => $('#grnInvoice').focus(),30);
+    }
     function renderSaleProducts() {
       const query = $('#saleSearch').value.trim().toLowerCase();
       const matches = saleCatalog.filter(product => !query || `${product.barcode} ${product.code} ${product.name}`.toLowerCase().includes(query));
@@ -922,6 +1055,67 @@
     $('#scanButton').addEventListener('click', () => showToast('Barcode scanner entry point ready for APEX integration.'));
     $('#exportButton').addEventListener('click', () => showToast('Item export prepared. APEX will generate the final file.'));
     $('#jobWorkExport').addEventListener('click', () => showToast('Job-worker balance export prepared.'));
+    $('#newPurchaseOrder').addEventListener('click', () => { $('#purchaseOrderForm').reset(); $('#poLineRows').innerHTML = ''; addPurchaseLine(); $('#poExpected').value = new Date().toISOString().slice(0,10); $('#poError').textContent = ''; $('#purchaseOrderModal').classList.add('open'); setTimeout(() => $('#poVendor').focus(),30); });
+    $('#closePurchaseOrder').addEventListener('click',closePurchaseOrder);
+    $('#cancelPurchaseOrder').addEventListener('click',closePurchaseOrder);
+    $('#purchaseOrderModal').addEventListener('click',event => { if (event.target === $('#purchaseOrderModal')) closePurchaseOrder(); });
+    $('#closePurchaseReceipt').addEventListener('click',closePurchaseReceipt);
+    $('#cancelPurchaseReceipt').addEventListener('click',closePurchaseReceipt);
+    $('#purchaseReceiptModal').addEventListener('click',event => { if (event.target === $('#purchaseReceiptModal')) closePurchaseReceipt(); });
+    ['purchaseSearch','purchaseStatusFilter','purchaseBusinessFilter'].forEach(id => $(`#${id}`).addEventListener('input',renderPurchasing));
+    $('#addPurchaseLine').addEventListener('click', () => { const row = addPurchaseLine(); $('.purchase-item-select',row).focus(); });
+    $('#poLineRows').addEventListener('input',updatePurchaseOrderPreview);
+    $('#poLineRows').addEventListener('click',event => { const button = event.target.closest('[data-remove-po-line]'); if (button) { button.closest('tr').remove(); updatePurchaseOrderPreview(); } });
+    $('#grnLineRows').addEventListener('input',previewPurchaseReceipt);
+    ['grnFreight','grnHandling','grnOther'].forEach(id => $(`#${id}`).addEventListener('input',previewPurchaseReceipt));
+    $('#purchaseOrderForm').addEventListener('submit',event => {
+      event.preventDefault();
+      const error = $('#poError');
+      const lines = $$('#poLineRows tr').map((row,index) => ({id:`L${index + 1}`,code:$('.purchase-item-select',row).value,qty:Number($('.purchase-line-qty',row).value),received:0,rate:Number($('.purchase-line-rate',row).value)}));
+      if (!$('#poVendor').value.trim()) { error.textContent = 'Enter a vendor.'; return; }
+      if (!lines.length) { error.textContent = 'Add at least one item to the purchase order.'; return; }
+      if (lines.some(line => !line.code || !Number.isFinite(line.qty) || line.qty <= 0 || Math.abs(Math.round(line.qty * 1000) - line.qty * 1000) > 0.0001 || !Number.isFinite(line.rate) || line.rate <= 0)) { error.textContent = 'Each item needs a positive quantity to three decimal places and a positive rate.'; return; }
+      if (new Set(lines.map(line => line.code)).size !== lines.length) { error.textContent = 'Each item can appear once per PO. Combine quantities for duplicate items.'; return; }
+      const id = `PO-DEMO-${String(purchaseOrders.filter(order => order.id.startsWith('PO-DEMO-')).length + 1).padStart(3,'0')}`;
+      purchaseOrders.unshift({id,vendor:$('#poVendor').value.trim(),business:$('#poBusiness').value,location:$('#poLocation').value,expected:$('#poExpected').value,transporter:$('#poTransporter').value.trim(),lines});
+      closePurchaseOrder(); renderPurchasing(); showToast(`${id} created. No stock has been added.`);
+    });
+    $('#purchaseOrderRows').addEventListener('click',event => { const button = event.target.closest('[data-po-receive]'); if (button) openPurchaseReceipt(purchaseOrders.find(order => order.id === button.dataset.poReceive)); });
+    $('#purchaseReceiptForm').addEventListener('submit',event => {
+      event.preventDefault();
+      const order = purchaseOrders.find(row => row.id === receivingPurchaseId);
+      const values = ['grnFreight','grnHandling','grnOther'].map(id => Number($(`#${id}`).value || 0));
+      const invoice = $('#grnInvoice').value.trim(), error = $('#grnError');
+      if (!order) return;
+      const entered = $$('#grnLineRows tr').map(row => ({source:order.lines.find(line => line.id === row.dataset.poLineId),qty:Number($('.grn-line-qty',row).value || 0)}));
+      if (entered.some(line => !Number.isFinite(line.qty) || line.qty < 0 || Math.abs(Math.round(line.qty * 1000) - line.qty * 1000) > 0.0001 || line.qty > purchaseOutstanding(line.source) - purchasePending(order,line.source) + 0.0001)) { error.textContent = 'Each accepted quantity must be within that PO line’s open balance.'; return; }
+      const lines = entered.filter(line => line.qty > 0).map(line => ({poLineId:line.source.id,code:line.source.code,qty:line.qty,rate:line.source.rate}));
+      if (!lines.length) { error.textContent = 'Accept a quantity for at least one item.'; return; }
+      if (values.some(value => !Number.isFinite(value) || value < 0)) { error.textContent = 'Incidental charges must be zero or greater.'; return; }
+      if (!invoice) { error.textContent = 'Enter the vendor invoice or challan number.'; return; }
+      if (purchaseReceipts.some(receipt => receipt.invoice.toLowerCase() === invoice.toLowerCase() && purchaseOrders.find(row => row.id === receipt.poId)?.vendor === order.vendor)) { error.textContent = 'This vendor invoice / challan is already recorded.'; return; }
+      const id = `GRN-DEMO-${String(purchaseReceipts.filter(receipt => receipt.id.startsWith('GRN-DEMO-')).length + 1).padStart(3,'0')}`;
+      purchaseReceipts.unshift({id,poId:order.id,invoice,lines,transporter:$('#grnTransporter').value.trim(),freight:values[0],handling:values[1],other:values[2],status:'PENDING'});
+      closePurchaseReceipt(); renderPurchasing(); showToast(`${id} submitted for approval. Stock is unchanged.`);
+    });
+    $('#purchaseReceiptRows').addEventListener('click',event => {
+      const button = event.target.closest('[data-grn-post]');
+      if (!button) return;
+      const receipt = purchaseReceipts.find(row => row.id === button.dataset.grnPost);
+      if (!receipt || receipt.status !== 'PENDING') return;
+      const order = purchaseOrders.find(row => row.id === receipt.poId);
+      if (receipt.lines.some(receiptLine => { const source = order.lines.find(line => line.id === receiptLine.poLineId); return !source || source.code !== receiptLine.code || receiptLine.qty > purchaseOutstanding(source) + 0.0001; })) { showToast('Receipt exceeds one or more PO line balances.'); return; }
+      const date = new Date().toISOString().slice(0,10);
+      receipt.lines.forEach(receiptLine => {
+        const source = order.lines.find(line => line.id === receiptLine.poLineId);
+        source.received = Math.round((source.received + receiptLine.qty) * 1000) / 1000;
+        inventoryMovements.push({date,ref:`${receipt.id}/${source.id}`,type:'Purchase receipt',business:order.business,location:order.location,status:'Available',code:source.code,qty:receiptLine.qty});
+        const saleProduct = saleCatalog.find(product => product.code === source.code);
+        if (saleProduct) { saleProduct.available += receiptLine.qty; saleProduct.purchased += receiptLine.qty; }
+      });
+      receipt.status = 'POSTED';
+      renderPurchasing(); renderInventory(); renderSaleProducts(); showToast(`${receipt.id} posted; ${receipt.lines.length} item line${receipt.lines.length === 1 ? '' : 's'} added to ${order.location}.`);
+    });
     const inventoryOptions = items.filter(item => item.status === 'ACTIVE').map(item => `<option value="${item.code}">${safe(item.name)} · ${item.code}</option>`).join('');
     $('#inventoryRequestItem').innerHTML = inventoryOptions;
     $('#ledgerItem').innerHTML = '<option value="">All items</option>' + inventoryOptions;
@@ -1101,9 +1295,10 @@
     });
     document.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#globalSearch').focus(); }
-      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); closeProductionModal(); closeInventoryRequest(); }
+      if (e.key === 'Escape') { closeItemModal(); closeJobWorkModal(); closeReceiptModal(); closeProductionModal(); closeInventoryRequest(); closePurchaseOrder(); closePurchaseReceipt(); }
     });
     renderItems();
+    renderPurchasing();
     renderJobWork();
     renderSaleProducts();
     renderSaleCart();
